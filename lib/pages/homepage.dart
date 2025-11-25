@@ -1,0 +1,187 @@
+import 'package:flutter/material.dart';
+import 'expense_model.dart';
+
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
+  static final List<Expense> expenses = [];
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  void _deleteExpense(int index) {
+    setState(() {
+      HomePage.expenses.removeAt(index);
+    });
+  }
+
+  void _editExpense(int index, String name, double amount, String category,
+      DateTime date, String details) {
+    setState(() {
+      HomePage.expenses[index] = Expense(
+        name: name,
+        amount: amount,
+        category: category,
+        date: date,
+        details: details,
+      );
+    });
+  }
+
+  void _openEditExpenseDialog(int index) {
+    Expense e = HomePage.expenses[index];
+    String name = e.name;
+    String amount = e.amount.toString();
+    String category = e.category;
+    String details = e.details;
+    DateTime selectedDate = e.date;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(builder: (context, setStateDialog) {
+          return AlertDialog(
+            title: const Text('Edit Expense'),
+            content: SingleChildScrollView(
+              child: Column(
+                children: [
+                  TextField(
+                    decoration:
+                        const InputDecoration(labelText: 'Expense Name'),
+                    controller: TextEditingController(text: name),
+                    onChanged: (value) => name = value,
+                  ),
+                  TextField(
+                    decoration: const InputDecoration(labelText: 'Amount'),
+                    controller: TextEditingController(text: amount),
+                    keyboardType: TextInputType.number,
+                    onChanged: (value) => amount = value,
+                  ),
+                  DropdownButtonFormField(
+                    value: category,
+                    items: const [
+                      DropdownMenuItem(
+                          value: 'transpo', child: Text('Transpo')),
+                      DropdownMenuItem(value: 'food', child: Text('Food')),
+                      DropdownMenuItem(
+                          value: 'education', child: Text('Education')),
+                      DropdownMenuItem(value: 'wants', child: Text('Wants')),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        setStateDialog(() => category = value);
+                      }
+                    },
+                  ),
+                  TextField(
+                    decoration: const InputDecoration(labelText: 'Details'),
+                    controller: TextEditingController(text: details),
+                    onChanged: (value) => details = value,
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Text(
+                          'Date: ${selectedDate.toLocal().toString().split(' ')[0]}'),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () async {
+                          final pickedDate = await showDatePicker(
+                            context: context,
+                            initialDate: selectedDate,
+                            firstDate: DateTime(2000),
+                            lastDate: DateTime(2100),
+                          );
+                          if (pickedDate != null) {
+                            setStateDialog(() => selectedDate = pickedDate);
+                          }
+                        },
+                        child: const Text('Select Date'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  if (name.isNotEmpty && double.tryParse(amount) != null) {
+                    _editExpense(
+                        index,
+                        name,
+                        double.parse(amount),
+                        category,
+                        selectedDate,
+                        details);
+                    Navigator.pop(context);
+                  }
+                },
+                child: const Text('Save'),
+              ),
+            ],
+          );
+        });
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final total = HomePage.expenses.fold(0.0, (sum, e) => sum + e.amount);
+
+    return Scaffold(
+      body: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            color: Colors.green.shade100,
+            child: Text(
+              'Total: ₱${total.toStringAsFixed(2)}',
+              style:
+                  const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+          ),
+          Expanded(
+            child: HomePage.expenses.isEmpty
+                ? const Center(child: Text('No expenses yet.'))
+                : ListView.builder(
+                    itemCount: HomePage.expenses.length,
+                    itemBuilder: (context, index) {
+                      final e = HomePage.expenses[index];
+                      return ListTile(
+                        title: Text(e.name),
+                        subtitle: Text(
+                          '₱${e.amount.toStringAsFixed(2)} • ${e.category}\n'
+                          '${e.details.isNotEmpty ? "${e.details}\n" : ""}'
+                          '${e.date.toLocal().toString().split(' ')[0]}',
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit, color: Colors.blue),
+                              onPressed: () => _openEditExpenseDialog(index),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete, color: Color.fromARGB(255, 94, 23, 18)),
+                              onPressed: () => _deleteExpense(index),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}

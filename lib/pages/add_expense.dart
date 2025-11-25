@@ -1,0 +1,106 @@
+import 'package:flutter/material.dart';
+import 'homepage.dart';
+import 'expense_model.dart';
+
+class AddExpensePage extends StatefulWidget {
+  const AddExpensePage({super.key});
+
+  @override
+  State<AddExpensePage> createState() => _AddExpensePageState();
+}
+
+class _AddExpensePageState extends State<AddExpensePage> {
+  final _formKey = GlobalKey<FormState>();
+  String name = '';
+  String amount = '';
+  String category = 'transpo';
+  String details = '';
+  DateTime selectedDate = DateTime.now();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Add Expense')),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              TextFormField(
+                decoration:
+                    const InputDecoration(labelText: 'Expense Name'),
+                onChanged: (val) => name = val,
+                validator: (val) =>
+                    val == null || val.isEmpty ? 'Enter a name' : null,
+              ),
+              TextFormField(
+                decoration: const InputDecoration(labelText: 'Amount'),
+                keyboardType: TextInputType.number,
+                onChanged: (val) => amount = val,
+                validator: (val) =>
+                    val == null || double.tryParse(val) == null
+                        ? 'Enter valid amount'
+                        : null,
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField(
+                value: category,
+                decoration: const InputDecoration(labelText: 'Category'),
+                items: const [
+                  DropdownMenuItem(value: 'transpo', child: Text('Transpo')),
+                  DropdownMenuItem(value: 'food', child: Text('Food')),
+                  DropdownMenuItem(value: 'education', child: Text('Education')),
+                  DropdownMenuItem(value: 'wants', child: Text('Wants')),
+                ],
+                onChanged: (val) {
+                  if (val != null) setState(() => category = val);
+                },
+              ),
+              TextFormField(
+                decoration: const InputDecoration(labelText: 'Details'),
+                onChanged: (val) => details = val,
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Text(
+                      'Date: ${selectedDate.toLocal().toString().split(' ')[0]}'),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: selectedDate,
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2100),
+                      );
+                      if (picked != null) setState(() => selectedDate = picked);
+                    },
+                    child: const Text('Select Date'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  if (_formKey.currentState!.validate()) {
+                    HomePage.expenses.add(Expense(
+                      name: name,
+                      amount: double.parse(amount),
+                      category: category,
+                      date: selectedDate,
+                      details: details,
+                    ));
+                    Navigator.pop(context);
+                  }
+                },
+                child: const Text('Add Expense'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
