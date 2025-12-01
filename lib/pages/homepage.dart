@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'expense_model.dart';
 import 'dart:core';
+import '../database/db_helper.dart';
 
 class HomePage extends StatefulWidget {
   // Global key to access state of Home Page from outside
@@ -23,6 +24,15 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   // Manage tabs on top of screen (the days of the week)
   late TabController _tabController;
 
+Future<void> loadExpenses() async {
+  final data = await DBHelper().getAllExpenses();
+  setState(() {
+    HomePage.expenses.clear();
+    HomePage.expenses.addAll(data);
+  });
+}
+
+
 List<DateTime> getCurrentWeekDates() {
     final now = DateTime.now();
     final startOfWeek = now.subtract(Duration(days: now.weekday -1));
@@ -32,6 +42,7 @@ List<DateTime> getCurrentWeekDates() {
 late List<DateTime> weekDates; 
   @override
   void initState(){
+    loadExpenses();
     super.initState();
     // Calculate dates for the current week
     weekDates = getCurrentWeekDates(); 
@@ -51,26 +62,35 @@ late List<DateTime> weekDates;
     return weekDates[_tabController.index];
   }
 
-  void _deleteExpense(int index) {
-    // Notify flutter with the data change and trigger build method to run again
+  void _deleteExpense(int index) async {
+    final id = HomePage.expenses[index].id!;
+    await DBHelper().deleteExpense(id);
+
     setState(() {
       HomePage.expenses.removeAt(index);
     });
   }
 
+
+
   void _editExpense(int index, String name, double amount, String category,
-      DateTime date, String details) {
-    // Update UI after change
-    setState(() {
-      // Instead of removing, we update the existing data
-      HomePage.expenses[index] = Expense(
+      DateTime date, String details) async {
+        final old = HomePage.expenses[index];
+
+      final updatedExpense = Expense(
+        id: old.id, // PRESERVE DATABASE ID
         name: name,
         amount: amount,
         category: category,
         date: date,
         details: details,
       );
-    });
+
+      await DBHelper().updateExpense(updatedExpense);
+
+      setState(() {
+        HomePage.expenses[index] = updatedExpense;
+      });
   }
 
   // Edit popup
