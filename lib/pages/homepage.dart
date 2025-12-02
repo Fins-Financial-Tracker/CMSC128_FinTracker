@@ -1,28 +1,22 @@
-// Store data and display it broken down by day of the week
-
 import 'package:flutter/material.dart';
 import 'expense_model.dart';
-import 'dart:core';
 
 class HomePage extends StatefulWidget {
-  final List<Expense> expenses; 
-  final Function(int) onDelete;
+  // Note: The expenses list is managed statically now (HomePage.expenses)
+  // and edit/delete operations call setState in the _HomePageState via this key/method.
+  const HomePage({super.key});
 
-  const HomePage({
-    super.key, 
-    required this.expenses, 
-    required this.onDelete,
-  });
-  // Permanent storage for every expense (static to make it accessible from anywhere in the app)
+  // Permanent storage for every expense
   static final List<Expense> expenses = [];
-  // Global key to access state of Home Page from outside
+  
+  // REQUIRED: Global key to access state from outside (e.g., in main.dart's FAB)
   static final GlobalKey<_HomePageState> homePageStateKey = GlobalKey<_HomePageState>();
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
-// Set up a stateful widget with mixing for animation control
+// Set up a stateful widget with mixing for animation control (for TabController)
 class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
   
   final Color kBlueLight = const Color(0xFFDCE8F5);
@@ -30,16 +24,25 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   late List<DateTime> weekDates;
   late String currentMonthName;
-  // Manage tabs on top of screen (the days of the week)
   late TabController _tabController;
 
-List<DateTime> getCurrentWeekDates() {
+  // REQUIRED: Method to get the currently selected date, called by main.dart
+  DateTime getSelectedDate() {
+    return weekDates[_tabController.index];
+  }
+
+  // Calculates the dates for the current week, starting on Monday.
+  List<DateTime> _getCurrentWeekDates() {
     final now = DateTime.now();
-    final startOfWeek = now.subtract(Duration(days: now.weekday -1));
+    // now.weekday is 1 (Mon) to 7 (Sun). Subtracting (now.weekday - 1) gets us to Monday.
+    final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
     return List.generate(7, (i) => startOfWeek.add(Duration(days: i)));
   }
 
-late List<DateTime> weekDates; 
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+  
   @override
   void initState() {
     super.initState();
@@ -49,70 +52,38 @@ late List<DateTime> weekDates;
     const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     currentMonthName = months[now.month - 1];
 
-    _tabController = TabController(length: weekDates.length, vsync: this);
-
-    int todayIndex = 0;
-    for (int i = 0; i < weekDates.length; i++) {
-      if (_isSameDay(weekDates[i], now)) {
-        todayIndex = i;
-        break;
-      }
-    }
-    _tabController.index = todayIndex;
+    // Find today's index (0-6) and initialize TabController
+    int todayIndex = now.weekday - 1; 
+    _tabController = TabController(
+      length: weekDates.length, 
+      vsync: this,
+      initialIndex: todayIndex,
+    );
 
     _tabController.addListener(() {
-      if (_tabController.indexIsChanging) {
-        setState(() {}); 
+      if (!_tabController.indexIsChanging) {
+        setState(() {});
       }
     });
-    // Calculate dates for the current week
-    weekDates = getCurrentWeekDates(); 
-    _tabController = TabController(length: weekDates.length, vsync: this, initialIndex: DateTime.now().weekday - 1); 
   }
 
   @override
-  // Clean up page
   void dispose() {
     _tabController.dispose(); 
     super.dispose();
   }
 
-  List<DateTime> _getCurrentWeekDates() {
-    final now = DateTime.now();
-    final startOfWeek = now.subtract(Duration(days: now.weekday % 7));
-    return List.generate(7, (i) => startOfWeek.add(Duration(days: i)));
-  }
-
-  bool _isSameDay(DateTime a, DateTime b) {
-    return a.year == b.year && a.month == b.month && a.day == b.day;
-  }
-
-  // --- LOGIC: EDIT EXPENSE ---
-  void _editExpense(int index, String name, double amount, String category, DateTime date, String details) {
-    setState(() {
-      widget.expenses[index] = Expense(
-    // Tell the controller to free up system sources (manages the Mon-Sun tabs)
-    _tabController.dispose();
-    super.dispose(); 
-  }
-
-  DateTime getSelectedDate() {
-    // Get actual date time object for the day 
-    return weekDates[_tabController.index];
-  }
-
+  // --- LOGIC: DELETE EXPENSE ---
   void _deleteExpense(int index) {
-    // Notify flutter with the data change and trigger build method to run again
     setState(() {
       HomePage.expenses.removeAt(index);
     });
   }
 
+  // --- LOGIC: EDIT EXPENSE ---
   void _editExpense(int index, String name, double amount, String category,
       DateTime date, String details) {
-    // Update UI after change
     setState(() {
-      // Instead of removing, we update the existing data
       HomePage.expenses[index] = Expense(
         name: name,
         amount: amount,
@@ -125,41 +96,40 @@ late List<DateTime> weekDates;
 
   // Edit popup
   void _openEditExpenseDialog(int index) {
-    // Retrieve current expense object
     Expense e = HomePage.expenses[index];
-    // Extract values from the object
     String name = e.name;
-    String amount = e.amount.toString();
+    String amountText = e.amount.toStringAsFixed(2); 
     String category = e.category;
     String details = e.details;
     DateTime selectedDate = e.date;
+    
+    final nameController = TextEditingController(text: name);
+    final amountController = TextEditingController(text: amountText);
+    final detailsController = TextEditingController(text: details);
 
-    // Display popup window
+
     showDialog(
       context: context,
       builder: (context) {
-        // Self contained state since AlertDialog doesnt redraw after change
-        //  Redraw the dialog only
         return StatefulBuilder(builder: (context, setStateDialog) {
           return AlertDialog(
             title: const Text('Edit Expense'),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                // Input boxes to change details
                 children: [
                   TextField(
                     decoration: const InputDecoration(labelText: 'Expense Name'),
-                    controller: TextEditingController(text: name),
+                    controller: nameController,
                     onChanged: (value) => name = value,
                   ),
                   TextField(
                     decoration: const InputDecoration(labelText: 'Amount'),
-                    controller: TextEditingController(text: amount),
+                    controller: amountController,
                     keyboardType: TextInputType.number,
-                    onChanged: (value) => amount = value,
+                    onChanged: (value) => amountText = value,
                   ),
-                  DropdownButtonFormField(
+                  DropdownButtonFormField<String>(
                     value: ['transpo', 'food', 'education', 'wants'].contains(category) ? category : 'transpo',
                     items: const [
                       DropdownMenuItem(value: 'transpo', child: Text('Transpo')),
@@ -167,13 +137,13 @@ late List<DateTime> weekDates;
                       DropdownMenuItem(value: 'education', child: Text('Education')),
                       DropdownMenuItem(value: 'wants', child: Text('Wants')),
                     ],
-                    onChanged: (value) {
-                      if (value != null) setStateDialog(() => category = value.toString());
+                    onChanged: (String? value) {
+                      if (value != null) setStateDialog(() => category = value);
                     },
                   ),
                   TextField(
                     decoration: const InputDecoration(labelText: 'Details'),
-                    controller: TextEditingController(text: details),
+                    controller: detailsController,
                     onChanged: (value) => details = value,
                   ),
                   const SizedBox(height: 16),
@@ -205,11 +175,11 @@ late List<DateTime> weekDates;
                 onPressed: () => Navigator.pop(context),
                 child: const Text('Cancel'),
               ),
-              // Submission Point
               ElevatedButton(
                 onPressed: () {
-                  if (name.isNotEmpty && double.tryParse(amount) != null) {
-                    _editExpense(realIndex, name, double.parse(amount), category, selectedDate, details);
+                  final double? amount = double.tryParse(amountController.text);
+                  if (nameController.text.isNotEmpty && amount != null) {
+                    _editExpense(index, nameController.text, amount, category, selectedDate, detailsController.text);
                     Navigator.pop(context);
                   }
                 },
@@ -219,10 +189,15 @@ late List<DateTime> weekDates;
           );
         });
       },
-    );
+    ).then((_) {
+      nameController.dispose();
+      amountController.dispose();
+      detailsController.dispose();
+    });
   }
+  
   String _getDayTotal(DateTime date) {
-    final dayExpenses = widget.expenses.where((e) => _isSameDay(e.date, date)).toList();
+    final dayExpenses = HomePage.expenses.where((e) => _isSameDay(e.date, date)).toList();
     double total = dayExpenses.fold(0.0, (sum, e) => sum + e.amount);
     return "₱${total.toStringAsFixed(2)}";
   }
@@ -237,23 +212,16 @@ late List<DateTime> weekDates;
         title: Text(
           currentMonthName,
           style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        title: const Text("Weekly Expenses"),
-        bottom: TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          tabs: weekDates.map((date) => Tab(
-            text: '${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][date.weekday-1]} ${date.day}/${date.month}',
-          )).toList(),
         ),
         centerTitle: true,
       ),
       body: Column(
         children: [
+          // --- Custom Day Selector (Row of Buttons) ---
           Container(
             margin: const EdgeInsets.symmetric(vertical: 10),
             height: 90,
-            padding: const EdgeInsets.symmetric(horizontal: 8), // Add padding to sides
-            // switched to ROW to fit everything on one screen
+            padding: const EdgeInsets.symmetric(horizontal: 8), 
             child: Row(
               children: weekDates.asMap().entries.map((entry) {
                 final index = entry.key;
@@ -268,8 +236,7 @@ late List<DateTime> weekDates;
                       _tabController.animateTo(index);
                     },
                     child: Container(
-                      // We removed the fixed width (55) and right margin
-                      margin: const EdgeInsets.symmetric(horizontal: 4), // Small gap between bubbles
+                      margin: const EdgeInsets.symmetric(horizontal: 4), 
                       decoration: BoxDecoration(
                         color: isSelected ? kSelectedBlue : const Color(0xFFE0E0E0).withOpacity(0.5),
                         borderRadius: BorderRadius.circular(25),
@@ -280,7 +247,7 @@ late List<DateTime> weekDates;
                           Text(
                             dayName, 
                             style: TextStyle(
-                              fontSize: 11, // Slightly smaller to prevent clipping
+                              fontSize: 11, 
                               color: isSelected ? Colors.white70 : Colors.grey
                             )
                           ),
@@ -301,7 +268,7 @@ late List<DateTime> weekDates;
               }).toList(),
             ),
           ),
-
+          // --- Main Content Area (TabBarView) ---
           Expanded(
             child: TabBarView(
               controller: _tabController,
@@ -315,25 +282,15 @@ late List<DateTime> weekDates;
     );
   }
 
+  // Widget responsible for showing summary cards and the list of expenses for a specific day
   Widget _buildDayPage(DateTime date) {
-    final dayExpenses = widget.expenses.where((e) => _isSameDay(e.date, date)).toList();
-      body: TabBarView(
-        controller: _tabController,
-        children: weekDates.asMap().entries.map((entry) {
-          final index = entry.key;
-          final day = entry.value; 
-          // Filter expenses by selected weekday
-          final filtered = HomePage.expenses.where((e) {
-            return e.date.year == weekDates[index].year &&
-                   e.date.month == weekDates[index].month &&
-                   e.date.day == weekDates[index].day;
-          }).toList();
-
+    final dayExpenses = HomePage.expenses.where((e) => _isSameDay(e.date, date)).toList();
+    
     return Column(
       children: [
         // SUMMARY CARDS
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0), // Added vertical padding
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -346,7 +303,7 @@ late List<DateTime> weekDates;
           ),
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 10), // Reduced spacing slightly
 
         Expanded(
           child: dayExpenses.isEmpty
@@ -362,13 +319,16 @@ late List<DateTime> weekDates;
                   separatorBuilder: (context, index) => const Divider(height: 1),
                   itemBuilder: (context, index) {
                     final item = dayExpenses[index];
-                    final realIndex = widget.expenses.indexOf(item);
+                    final realIndex = HomePage.expenses.indexOf(item);
 
                     return Dismissible(
                       key: UniqueKey(),
                       direction: DismissDirection.endToStart,
-                      background: Container(color: Colors.redAccent, alignment: Alignment.centerRight, child: const Icon(Icons.delete, color: Colors.white)),
-                      onDismissed: (direction) => widget.onDelete(realIndex),
+                      background: Container(color: Colors.redAccent, alignment: Alignment.centerRight, child: const Padding(
+                        padding: EdgeInsets.only(right: 20.0),
+                        child: Icon(Icons.delete, color: Colors.white),
+                      )),
+                      onDismissed: (direction) => _deleteExpense(realIndex),
                       child: _buildTransactionItem(item, realIndex),
                     );
                   },
@@ -378,6 +338,7 @@ late List<DateTime> weekDates;
     );
   }
 
+  // Helper widget for the summary cards
   Widget _buildSummaryCard(String title, String amount) {
     return Expanded(
       child: Container(
@@ -397,7 +358,32 @@ late List<DateTime> weekDates;
     );
   }
 
+  // Helper widget for a single transaction row
   Widget _buildTransactionItem(Expense item, int realIndex) {
+    IconData icon;
+    Color iconColor;
+    switch (item.category) {
+      case 'transpo':
+        icon = Icons.directions_car_filled;
+        iconColor = Colors.blue.shade700;
+        break;
+      case 'food':
+        icon = Icons.fastfood;
+        iconColor = Colors.red.shade700;
+        break;
+      case 'education':
+        icon = Icons.school;
+        iconColor = Colors.green.shade700;
+        break;
+      case 'wants':
+        icon = Icons.shopping_bag;
+        iconColor = Colors.purple.shade700;
+        break;
+      default:
+        icon = Icons.attach_money;
+        iconColor = Colors.black;
+    }
+
     return Container(
       color: const Color(0xFFECF3FA),
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
@@ -405,24 +391,26 @@ late List<DateTime> weekDates;
         children: [
           IconButton(
             icon: Icon(Icons.edit_square, color: Colors.grey[400], size: 24),
-            onPressed: () => _openEditExpenseDialog(realIndex, item),
+            onPressed: () => _openEditExpenseDialog(realIndex),
           ),
           const SizedBox(width: 12),
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(color: Colors.white.withOpacity(0.5), borderRadius: BorderRadius.circular(8)),
-            child: const Icon(Icons.directions_car_filled, color: Colors.black87),
+            child: Icon(icon, color: iconColor),
           ),
           const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(item.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              Text(item.category.toUpperCase(), style: TextStyle(color: Colors.blueGrey[300], fontSize: 10)),
-            ],
+          Expanded( 
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(item.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                Text(item.category.toUpperCase(), style: TextStyle(color: Colors.blueGrey[300], fontSize: 10)),
+              ],
+            ),
           ),
           const Spacer(),
-          Text("-₱${item.amount.toStringAsFixed(2)}", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.grey[400])),
+          Text("-₱${item.amount.toStringAsFixed(2)}", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.redAccent)),
         ],
       ),
     );

@@ -23,9 +23,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: const ExpenseHomePage(),
+      home: ExpenseHomePage(),
     );
   }
 }
@@ -45,11 +45,11 @@ class ExpenseHomePage extends StatefulWidget {
 }
 
 class _ExpenseHomePageState extends State<ExpenseHomePage> {
-  // Track selected tab: 1 means Home Tab is selected first
+  // Track selected tab: 1 means Home Tab is selected first (index 1 is 'home')
   int _bottomNavIndex = 1;
 
-  // 1. THE MASTER LIST LIVES HERE NOW
-  final List<Expense> myExpenses = [];
+  // The master list is now static inside HomePage, so this list is removed:
+  // final List<Expense> myExpenses = []; 
 
   final iconList = <IconData>[
     Icons.bar_chart,
@@ -60,7 +60,8 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    // List of all the screens
+    // List of all the screens. HomePage must be instantiated with its static key
+    // so its state (like the selected date) can be accessed from the FAB.
     final pages = <Widget>[
       const SummaryPage(),
       HomePage(key: HomePage.homePageStateKey),
@@ -78,7 +79,7 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
         onPressed: () async {
           // Check if we are in Home Page
           if (_bottomNavIndex == 1) {
-            // Get the currently selected date from the HomePage State
+            // Get the currently selected date from the HomePage State via the GlobalKey
             final selectedDate = HomePage.homePageStateKey.currentState?.getSelectedDate() ?? DateTime.now();
             
             final newExpense = await Navigator.push(
@@ -86,16 +87,18 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
               MaterialPageRoute(builder: (_) => AddExpensePage(initialDate: selectedDate)),
             );
 
-            if (newExpense != null) {
+            if (newExpense != null && newExpense is Expense) {
               setState(() {
-                HomePage.expenses.add(newExpense); // rebuild HomePage
-                _bottomNavIndex = 1; // switch to Home tab
+                // Add the new expense to the shared static list
+                HomePage.expenses.add(newExpense); 
+                // Switch back to the Home tab to see the change
+                _bottomNavIndex = 1; 
               });
             }
           } else {
             /* If user presses the floating action btn while on another tab,
-              Default to Home Page
-            */
+               Default to Home Page
+             */
             setState(() => _bottomNavIndex = 1);
           }
         },
