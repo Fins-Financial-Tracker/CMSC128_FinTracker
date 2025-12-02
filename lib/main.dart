@@ -48,11 +48,14 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
   // Track selected tab: 1 means Home Tab is selected first
   int _bottomNavIndex = 1;
 
+  // 1. THE MASTER LIST LIVES HERE NOW
+  final List<Expense> myExpenses = [];
+
   final iconList = <IconData>[
     Icons.bar_chart,
     Icons.home,
     Icons.settings,
-    Icons.person, // dummy
+    Icons.person,
   ];
 
   @override
@@ -62,13 +65,16 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
       const SummaryPage(),
       HomePage(key: HomePage.homePageStateKey),
       const CustomizationPage(),
-      const ProfilePage(), // dummy
+      const ProfilePage(), 
     ];
 
     return Scaffold(
+      // Light blue/grey background from wireframe
+      backgroundColor: const Color(0xFFF5F7FA), 
       body: pages[_bottomNavIndex],
       // Code for the add button
       floatingActionButton: FloatingActionButton(
+        shape: const CircleBorder(), // <--- Makes the button perfectly round
         onPressed: () async {
           // Check if we are in Home Page
           if (_bottomNavIndex == 1) {
@@ -93,17 +99,20 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
             setState(() => _bottomNavIndex = 1);
           }
         },
-        child: const Icon(Icons.add),
-        backgroundColor: Colors.green,
+        backgroundColor: const Color(0xFF5E6C85), // Wireframe blue color
+        child: const Icon(Icons.add, color: Colors.white),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      
       bottomNavigationBar: AnimatedBottomNavigationBar(
         icons: iconList,
         activeIndex: _bottomNavIndex,
         gapLocation: GapLocation.center,
-        notchSmoothness: NotchSmoothness.verySmoothEdge,
+        notchSmoothness: NotchSmoothness.softEdge,
         leftCornerRadius: 32,
         rightCornerRadius: 32,
+        activeColor: const Color(0xFF5E6C85),
+        inactiveColor: Colors.grey,
         // Update the state (selected index) when tapping a tab
         onTap: (index) {
           setState(() => _bottomNavIndex = index);
