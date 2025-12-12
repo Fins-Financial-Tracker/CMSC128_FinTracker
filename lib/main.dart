@@ -1,47 +1,42 @@
+import 'package:fins/database/db_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'pages/homepage.dart';
 import 'pages/summary.dart';
 import 'pages/customizations.dart';
-import 'pages/add_expense.dart';
+import 'pages/add_expense.dart'; 
 import 'pages/profile.dart';
 import 'pages/expense_model.dart';
-import 'pages/landing.dart';
 
-void main() async {
+import 'package:sqflite_common_ffi/sqflite_ffi.dart'; // <-- New Import
+import 'dart:io'; // <-- New Import
+
+/*
+===============
+  ENTRY POINT
+===============
+*/ 
+void main() {
+  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    // Initialize FFI database factory for desktop
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
+  // This line is good practice for Flutter startup
   WidgetsFlutterBinding.ensureInitialized();
-
-  final prefs = await SharedPreferences.getInstance();
-  final bool isLoggedIn = prefs.getBool("isLoggedIn") ?? false;
-
-  runApp(MyApp(isLoggedIn: isLoggedIn));
+  runApp(const MyApp());
 }
 
+// Define the root widget, set the application theme, and entry screen (ExpenseHomePage)
 class MyApp extends StatelessWidget {
-  final bool isLoggedIn;
-
-  const MyApp({super.key, required this.isLoggedIn});
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<SharedPreferences>(
-      future: SharedPreferences.getInstance(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) return const SizedBox();
-
-        final prefs = snapshot.data!;
-        final bool isFirstTime = prefs.getBool("isFirstTime") ?? true;
-
-        return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          home: !isLoggedIn
-              ? const LandingPage()
-              : (isFirstTime ? const CustomizationPage()
-                             : const ExpenseHomePage()),
-        );
-      },
+    return const MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: ExpenseHomePage(),
     );
   }
 }
@@ -50,7 +45,9 @@ class MyApp extends StatelessWidget {
 ===============
   Main Screen
 ===============
-*/
+*/ 
+
+// Stateful because it needs to track which tab is currently selected
 class ExpenseHomePage extends StatefulWidget {
   const ExpenseHomePage({super.key});
 
@@ -59,7 +56,11 @@ class ExpenseHomePage extends StatefulWidget {
 }
 
 class _ExpenseHomePageState extends State<ExpenseHomePage> {
+  // Track selected tab: 1 means Home Tab is selected first (index 1 is 'home')
   int _bottomNavIndex = 1;
+
+  // The master list is now static inside HomePage, so this list is removed:
+  // final List<Expense> myExpenses = []; 
 
   final iconList = <IconData>[
     Icons.bar_chart,
@@ -70,58 +71,72 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    // List of all the screens. HomePage must be instantiated with its static key
+    // so its state (like the selected date) can be accessed from the FAB.
     final pages = <Widget>[
       const SummaryPage(),
       HomePage(key: HomePage.homePageStateKey),
       const CustomizationPage(),
-      const ProfilePage(),
+      const ProfilePage(), 
     ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      resizeToAvoidBottomInset: false,
+      // Light blue/grey background from wireframe
+      backgroundColor: const Color(0xFFF5F7FA), 
       body: pages[_bottomNavIndex],
-
+      // Code for the add button
       floatingActionButton: FloatingActionButton(
-        shape: const CircleBorder(),
+        shape: const CircleBorder(), // <--- Makes the button perfectly round
         onPressed: () async {
+          // Check if we are in Home Page
           if (_bottomNavIndex == 1) {
-            final selectedDate =
-                HomePage.homePageStateKey.currentState?.getSelectedDate() ??
-                    DateTime.now();
-
+            // Get the currently selected date from the HomePage State via the GlobalKey
+            final selectedDate = HomePage.homePageStateKey.currentState?.getSelectedDate() ?? DateTime.now();
+            
             final newExpense = await Navigator.push(
               context,
-              MaterialPageRoute(
-                  builder: (_) => AddExpensePage(initialDate: selectedDate)),
+              MaterialPageRoute(builder: (_) => AddExpensePage(initialDate: selectedDate)),
             );
 
             if (newExpense != null && newExpense is Expense) {
+              // Add database
+              await DBHelper().insertExpense(newExpense);
               setState(() {
-                HomePage.expenses.add(newExpense);
-                _bottomNavIndex = 1;
+                // Add the new expense to the shared static list
+                HomePage.expenses.add(newExpense); 
+                // Switch back to the Home tab to see the change
+                _bottomNavIndex = 1; 
               });
             }
           } else {
+            /* If user presses the floating action btn while on another tab,
+               Default to Home Page
+             */
             setState(() => _bottomNavIndex = 1);
           }
         },
-        backgroundColor: const Color(0xFF5E6C85),
+        backgroundColor: const Color(0xFF5E6C85), // Wireframe blue color
         child: const Icon(Icons.add, color: Colors.white),
       ),
-
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-
-      bottomNavigationBar: AnimatedBottomNavigationBar(
-        icons: iconList,
-        activeIndex: _bottomNavIndex,
-        gapLocation: GapLocation.center,
-        notchSmoothness: NotchSmoothness.softEdge,
-        leftCornerRadius: 32,
-        rightCornerRadius: 32,
-        activeColor: const Color(0xFF5E6C85),
-        inactiveColor: Colors.grey,
-        onTap: (index) {
-          setState(() => _bottomNavIndex = index);
+      
+      bottomNavigationBar: LayoutBuilder(
+        builder: (BuildContext innerContext, BoxConstraints constraints) {
+          return AnimatedBottomNavigationBar(
+            icons: iconList,
+            activeIndex: _bottomNavIndex,
+            gapLocation: GapLocation.center,
+            notchSmoothness: NotchSmoothness.softEdge,
+            leftCornerRadius: 32,
+            rightCornerRadius: 32,
+            activeColor: const Color(0xFF5E6C85),
+            inactiveColor: Colors.grey,
+            // Update the state (selected index) when tapping a tab
+            onTap: (index) {
+              setState(() => _bottomNavIndex = index);
+            },
+          );
         },
       ),
     );
