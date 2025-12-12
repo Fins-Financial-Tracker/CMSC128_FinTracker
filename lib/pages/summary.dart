@@ -1,10 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart'; 
-import 'homepage.dart';
+//import 'homepage.dart';
 import 'expense_model.dart';
+import '../database/db_helper.dart';
 
-class SummaryPage extends StatelessWidget {
+class SummaryPage extends StatefulWidget {
   const SummaryPage({super.key});
+
+  @override
+  _SummaryPageState createState() => _SummaryPageState();
+}
+
+class _SummaryPageState extends State<SummaryPage> {
+  List<Expense> _expenses = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    loadExpensesFromDB();
+  }
+
+  Future<void> loadExpensesFromDB() async {
+    final db = DBHelper();
+    final data = await db.getAllExpenses();
+
+    setState(() {
+      _expenses = data;
+      _isLoading = false;
+    });
+  }
 
   /*
   =======================================
@@ -13,7 +38,7 @@ class SummaryPage extends StatelessWidget {
   */
 
   Map<String, dynamic> calculateWeeklySummary() {
-    if (HomePage.expenses.isEmpty) {
+    if (_expenses.isEmpty) {
       return {
         'total': 0.0,
         'categories': [],
@@ -38,7 +63,7 @@ class SummaryPage extends StatelessWidget {
 
 
     // ===== Filter Expenses For Current Week =====
-    final List<Expense> weeklyExpensesList = HomePage.expenses.where((e) {
+    final List<Expense> weeklyExpensesList = _expenses.where((e) {
       // Compare only the date (normalize the expense date)
       final expenseDate = DateTime(e.date.year, e.date.month, e.date.day);
       
@@ -127,6 +152,12 @@ class SummaryPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     final summary = calculateWeeklySummary();
     final double weeklyExpenses = summary['total'];
     final List<Map<String, dynamic>> categoryData = summary['categories'];
@@ -134,7 +165,7 @@ class SummaryPage extends StatelessWidget {
     final DateTime end = summary['endOfWeek'];
     
     // Format dates for display
-    final dateFormatter = (DateTime date) => 
+    String dateFormatter(DateTime date) => 
       '${date.month}/${date.day}';
     
     // Prepare data for the Pie Chart
