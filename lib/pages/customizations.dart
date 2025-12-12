@@ -4,6 +4,7 @@ import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz; 
 import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
+import 'dart:io';
 
 
 class CustomizationPage extends StatefulWidget {
@@ -36,7 +37,10 @@ class _CustomizationPageState extends State<CustomizationPage> {
   void initState() {
     super.initState();
     tz.initializeTimeZones();
-    _initializeNotifications(); 
+    // Initialize notifications only on supported platforms (Android, iOS, macOS, Linux)
+    if (Platform.isAndroid || Platform.isIOS || Platform.isMacOS || Platform.isLinux) {
+      _initializeNotifications();
+    }
   }
 
   @override
@@ -165,10 +169,32 @@ class _CustomizationPageState extends State<CustomizationPage> {
 
     final prefs = await SharedPreferences.getInstance();
     prefs.setBool("isFirstTime", false); // mark setup completed
+    // Optionally (re)schedule reminders based on current settings
+    if (Platform.isAndroid || Platform.isIOS || Platform.isMacOS || Platform.isLinux) {
+      if (_notificationsEnabled) {
+        await _scheduleReminder();
+      } else {
+        await flutterLocalNotificationsPlugin.cancelAll();
+      }
+    }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${pendingRequests.length} pending notifications found (Check console)')),
+    // Show count of pending scheduled notifications
+    if (Platform.isAndroid || Platform.isIOS || Platform.isMacOS || Platform.isLinux) {
+      final pending = await flutterLocalNotificationsPlugin.pendingNotificationRequests();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${pending.length} pending notifications found (see console)')),
       );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Notifications not supported on Windows; settings saved.')),
+      );
+    }
+
+    // Continue to Home page after saving
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const ExpenseHomePage()),
+    );
   } 
 
   // NEW: Helper widget for the notification toggle switch
@@ -191,10 +217,7 @@ class _CustomizationPageState extends State<CustomizationPage> {
       ],
     );
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const ExpenseHomePage()),
-    );
+    // Navigation handled after saving; keep toggle focused on UI state only
   }
 
 
@@ -370,5 +393,22 @@ class _CustomizationPageState extends State<CustomizationPage> {
         ),
       ],
     );
+  }
+
+  // Inspect currently scheduled notifications for debugging/test
+  Future<void> _checkPendingNotifications() async {
+    if (Platform.isAndroid || Platform.isIOS || Platform.isMacOS || Platform.isLinux) {
+      final pending = await flutterLocalNotificationsPlugin.pendingNotificationRequests();
+      for (final p in pending) {
+        print('Pending: id=${p.id}, title=${p.title}, body=${p.body}, payload=${p.payload}');
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Pending reminders: ${pending.length}')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Notifications are not supported on Windows.')),
+      );
+    }
   }
 }

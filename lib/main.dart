@@ -59,11 +59,20 @@ class MyApp extends StatelessWidget {
 }
 
 Future<bool> _shouldShowLanding() async {
+  // Debug override: set to true to always show LandingPage during testing
+  const bool kForceShowLanding = true;
+  if (kForceShowLanding) return true;
   final prefs = await SharedPreferences.getInstance();
   // Default to true on first run if not set
   final isFirstTime = prefs.getBool('isFirstTime');
   // Show landing if never set; after user proceeds from landing, they set this
   return isFirstTime == null || isFirstTime == true;
+}
+
+// Optional: developer helper to reset first-run state
+Future<void> resetFirstRunForTesting() async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setBool('isFirstTime', true);
 }
 
 /*
