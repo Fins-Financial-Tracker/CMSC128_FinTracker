@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz; 
+import 'package:shared_preferences/shared_preferences.dart';
+import '../main.dart';
+
 
 class CustomizationPage extends StatefulWidget {
   const CustomizationPage({super.key});
@@ -157,36 +160,12 @@ class _CustomizationPageState extends State<CustomizationPage> {
   }
 
   // Function called when the Done button is pressed
-  void _saveCustomizations() {
-    // 1. Get the final budget amount
+  void _saveCustomizations() async {
     _budgetAmount = _budgetController.text;
 
-    if(_notificationsEnabled){
-       _scheduleReminder();
-      // In a real app, you would navigate away or save data to a database here.
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Customizations saved and reminder scheduled!')),
-    );
-    } else {
-      flutterLocalNotificationsPlugin.cancelAll();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Customizations saved. All reminders cancelled.')),
-      );
-    }
-  }
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setBool("isFirstTime", false); // mark setup completed
 
-  // NEW: Helper function for checking pending notifications
-  void _checkPendingNotifications() async {
-    final pendingRequests = await flutterLocalNotificationsPlugin.pendingNotificationRequests();
-    
-    if (pendingRequests.isNotEmpty) {
-      print('--- PENDING NOTIFICATIONS FOUND ---');
-      for (var request in pendingRequests) {
-        print('ID: ${request.id}, Title: ${request.title}, Body: ${request.body}');
-      }
-    } else {
-      print('--- NO PENDING NOTIFICATIONS ---');
-    }
     ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('${pendingRequests.length} pending notifications found (Check console)')),
       );
@@ -211,7 +190,13 @@ class _CustomizationPageState extends State<CustomizationPage> {
         ),
       ],
     );
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const ExpenseHomePage()),
+    );
   }
+
 
   @override
   Widget build(BuildContext context) {
