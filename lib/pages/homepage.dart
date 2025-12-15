@@ -211,9 +211,14 @@ Future<void> loadExpenses() async {
               ElevatedButton(
                 onPressed: () {
                   final double? amount = double.tryParse(amountController.text);
-                  if (nameController.text.isNotEmpty && amount != null) {
+                  if (nameController.text.isNotEmpty && amount != null && amount > 0) {
                     _editExpense(index, nameController.text, amount, category, selectedDate, detailsController.text);
                     Navigator.pop(context);
+                  } else {
+                    // simple feedback if invalid
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Please enter a positive amount.')),
+                    );
                   }
                 },
                 child: const Text('Save'),

@@ -25,6 +25,7 @@ class _CustomizationPageState extends State<CustomizationPage> {
   String _selectedReminderFrequency = 'Daily';
   TimeOfDay _selectedTime = const TimeOfDay(hour: 20, minute: 0); // Default to 8:00 PM
   bool _notificationsEnabled = true; 
+  double? _savedBudget; // For showing current budget as placeholder
 
   // Lists for dropdown options
   final List<String> _budgetFrequencies = ['Weekly', 'Monthly'];
@@ -41,6 +42,7 @@ class _CustomizationPageState extends State<CustomizationPage> {
     if (Platform.isAndroid || Platform.isIOS || Platform.isMacOS || Platform.isLinux) {
       _initializeNotifications();
     }
+    _loadExistingSettings();
   }
 
   @override
@@ -165,11 +167,23 @@ class _CustomizationPageState extends State<CustomizationPage> {
 
   // Function called when the Done button is pressed
   void _saveCustomizations() async {
-    _budgetAmount = _budgetController.text;
+    _budgetAmount = _budgetController.text.trim();
 
-    // Validate and persist budget & cycle
-    final parsedBudget = double.tryParse(_budgetAmount);
-    if (parsedBudget == null || parsedBudget < 0) {
+    // Accept existing saved budget if input is empty; otherwise sanitize and parse
+    double? _parseBudget(String text) {
+      final cleaned = text.replaceAll(RegExp(r'[^0-9\.]'), '');
+      if (cleaned.isEmpty) return null;
+      return double.tryParse(cleaned);
+    }
+
+    double? budgetToSave;
+    if (_budgetAmount.isEmpty) {
+      budgetToSave = _savedBudget; // keep previously saved budget
+    } else {
+      budgetToSave = _parseBudget(_budgetAmount);
+    }
+
+    if (budgetToSave == null || budgetToSave < 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter a valid budget amount.')),
       );
@@ -177,9 +191,15 @@ class _CustomizationPageState extends State<CustomizationPage> {
     }
 
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setDouble('budgetAmount', parsedBudget);
+    await prefs.setDouble('budgetAmount', budgetToSave);
     await prefs.setString('budgetCycle', _selectedBudgetFrequency); // 'Weekly' | 'Monthly'
+    // Start a new cycle now
+    await prefs.setInt('cycleStartEpochMs', DateTime.now().millisecondsSinceEpoch);
     prefs.setBool("isFirstTime", false); // mark setup completed
+
+    setState(() {
+      _savedBudget = budgetToSave;
+    });
     // Optionally (re)schedule reminders based on current settings
     if (Platform.isAndroid || Platform.isIOS || Platform.isMacOS || Platform.isLinux) {
       if (_notificationsEnabled) {
@@ -207,6 +227,24 @@ class _CustomizationPageState extends State<CustomizationPage> {
       MaterialPageRoute(builder: (_) => const ExpenseHomePage()),
     );
   } 
+
+  Future<void> _loadExistingSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    final b = prefs.getDouble('budgetAmount');
+    if (b != null) {
+      setState(() {
+        _savedBudget = b;
+      });
+    }
+    final cycle = prefs.getString('budgetCycle');
+    if (cycle != null && _budgetFrequencies.contains(cycle)) {
+      setState(() {
+        _selectedBudgetFrequency = cycle;
+      });
+    }
+  }
+
+  String _formatCurrency(double value) => '₱${value.toStringAsFixed(2)}';
 
   // NEW: Helper widget for the notification toggle switch
   Widget _buildNotificationToggle() {
@@ -328,7 +366,9 @@ class _CustomizationPageState extends State<CustomizationPage> {
       controller: _budgetController,
       keyboardType: TextInputType.number,
       decoration: InputDecoration(
-        hintText: 'Enter your budget here',
+        hintText: _savedBudget != null
+            ? _formatCurrency(_savedBudget!)
+            : 'Enter your budget here... ',
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8.0),
         ),
