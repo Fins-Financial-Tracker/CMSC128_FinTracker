@@ -90,15 +90,15 @@ class ExpenseHomePage extends StatefulWidget {
 }
 
 class _ExpenseHomePageState extends State<ExpenseHomePage> {
-  // Track selected tab: 1 means Home Tab is selected first (index 1 is 'home')
-  int _bottomNavIndex = 1;
+  // Track selected tab. 0 is 'Home'.
+  int _bottomNavIndex = 0;
 
   // The master list is now static inside HomePage, so this list is removed:
   // final List<Expense> myExpenses = []; 
 
   final iconList = <IconData>[
-    Icons.bar_chart,
     Icons.home,
+    Icons.bar_chart,
     Icons.settings,
     Icons.person,
   ];
@@ -108,8 +108,8 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
     // List of all the screens. HomePage must be instantiated with its static key
     // so its state (like the selected date) can be accessed from the FAB.
     final pages = <Widget>[
-      const SummaryPage(),
       HomePage(key: HomePage.homePageStateKey),
+      const SummaryPage(),
       const CustomizationPage(),
       const ProfilePage(), 
     ];
@@ -123,8 +123,8 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
       floatingActionButton: FloatingActionButton(
         shape: const CircleBorder(), // <--- Makes the button perfectly round
         onPressed: () async {
-          // Check if we are in Home Page
-          if (_bottomNavIndex == 1) {
+          // Check if we are in Home Page (index 0)
+          if (_bottomNavIndex == 0) {
             // Get the currently selected date from the HomePage State via the GlobalKey
             final selectedDate = HomePage.homePageStateKey.currentState?.getSelectedDate() ?? DateTime.now();
             
@@ -140,14 +140,14 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
                 // Add the new expense to the shared static list
                 HomePage.expenses.add(newExpense); 
                 // Switch back to the Home tab to see the change
-                _bottomNavIndex = 1; 
+                _bottomNavIndex = 0; 
               });
             }
           } else {
             /* If user presses the floating action btn while on another tab,
                Default to Home Page
              */
-            setState(() => _bottomNavIndex = 1);
+            setState(() => _bottomNavIndex = 0);
           }
         },
         backgroundColor: const Color(0xFF5E6C85), // Wireframe blue color
