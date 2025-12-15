@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'expense_model.dart';
-import 'dart:core';
+import 'dart:async';
 import '../database/db_helper.dart';
+// import 'package:fluttertoast/fluttertoast.dart';
 
 class HomePage extends StatefulWidget {
   // Note: The expenses list is managed statically now (HomePage.expenses)
@@ -82,14 +83,6 @@ Future<void> loadExpenses() async {
   void dispose() {
     _tabController.dispose(); 
     super.dispose();
-  }
-
-  void _deleteExpense(int index) async {
-    final id = HomePage.expenses[index].id!;
-    await DBHelper().deleteExpense(id);
-      setState(() {
-      HomePage.expenses.removeAt(index);
-    });
   }
 
   void _editExpense(int index, String name, double amount, String category,
@@ -326,7 +319,7 @@ Future<void> loadExpenses() async {
           ),
         ),
 
-        const SizedBox(height: 10), // Reduced spacing slightly
+        const SizedBox(height: 10), 
 
         Expanded(
           child: dayExpenses.isEmpty
@@ -347,11 +340,43 @@ Future<void> loadExpenses() async {
                     return Dismissible(
                       key: UniqueKey(),
                       direction: DismissDirection.endToStart,
+                      confirmDismiss: (direction) async {
+                        final completer = Completer<bool>();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Row(
+                              children: [
+                                const Expanded(child: Text('Expense deleted')),
+                                TextButton(
+                                  onPressed: () {
+                                    completer.complete(false); // Don't dismiss
+                                  },
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: kSelectedBlue,
+                                    textStyle: const TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                  child: const Text('Undo'),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ).closed.then((reason) {
+                          if (reason != SnackBarClosedReason.action) {
+                            completer.complete(true); // Dismiss and delete
+                            final deletedExpense = HomePage.expenses[realIndex];
+                            final id = deletedExpense.id!;
+                            DBHelper().deleteExpense(id);
+                            setState(() {
+                              HomePage.expenses.removeAt(realIndex);
+                            });
+                          }
+                        });
+                        return completer.future;
+                      },
                       background: Container(color: Colors.redAccent, alignment: Alignment.centerRight, child: const Padding(
                         padding: EdgeInsets.only(right: 20.0),
                         child: Icon(Icons.delete, color: Colors.white),
                       )),
-                      onDismissed: (direction) => _deleteExpense(realIndex),
                       child: _buildTransactionItem(item, realIndex),
                     );
                   },
