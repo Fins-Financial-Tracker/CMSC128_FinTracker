@@ -85,20 +85,36 @@ class _SummaryPageState extends State<SummaryPage> {
       );
     }
 
-    // ===== Convert map to structured data =====
+    // ===== Build data for legend (all categories)
     final List<Map<String, dynamic>> categoryData = categoryTotals.entries.map((entry) {
-      final percentage = total > 0 ? (entry.value / total) * 100 : 0.0;
       return {
         'name': entry.key,
         'amount': entry.value,
-        'color': _getColorForCategory(entry.key), // Assign color based on category
-        'percent': percentage.round(),
+        'color': _getColorForCategory(entry.key),
+      };
+    }).toList();
+
+    // ===== Build data for chart (positive amounts only)
+    final double positiveSum = categoryTotals.values
+        .where((v) => v > 0)
+        .fold(0.0, (sum, v) => sum + v);
+
+    final List<Map<String, dynamic>> chartData = categoryTotals.entries
+        .where((e) => e.value > 0)
+        .map((entry) {
+      final percent = positiveSum > 0 ? ((entry.value / positiveSum) * 100).round() : 0;
+      return {
+        'name': entry.key,
+        'amount': entry.value,
+        'color': _getColorForCategory(entry.key),
+        'percent': percent,
       };
     }).toList();
 
     return {
       'total': total,
       'categories': categoryData,
+      'chartCategories': chartData,
       'startOfWeek': startOfWeek,
       'endOfWeek': endOfWeek,
     };
@@ -159,18 +175,21 @@ class _SummaryPageState extends State<SummaryPage> {
     }
 
     final summary = calculateWeeklySummary();
-    final double weeklyExpenses = summary['total'];
-    final List<Map<String, dynamic>> categoryData = summary['categories'];
-    final DateTime start = summary['startOfWeek']; 
-    final DateTime end = summary['endOfWeek'];
+    final double weeklyExpenses = summary['total'] as double;
+    final List<Map<String, dynamic>> categoryData =
+      List<Map<String, dynamic>>.from((summary['categories'] ?? const []) as List);
+    final List<Map<String, dynamic>> chartData =
+      List<Map<String, dynamic>>.from((summary['chartCategories'] ?? const []) as List);
+    final DateTime start = summary['startOfWeek'] as DateTime; 
+    final DateTime end = summary['endOfWeek'] as DateTime;
     
     // Format dates for display
     String dateFormatter(DateTime date) => 
       '${date.month}/${date.day}';
     
-    // Prepare data for the Pie Chart
-    final pieChartSections = _getPieChartSections(categoryData);
-    final isDataEmpty = categoryData.isEmpty;
+    // Prepare data for the Pie Chart (only positive categories)
+    final pieChartSections = _getPieChartSections(chartData);
+    final isDataEmpty = chartData.isEmpty;
     
 
     return Scaffold(
