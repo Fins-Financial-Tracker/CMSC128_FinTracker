@@ -1,8 +1,8 @@
 # CMSC129 Activity 1 LEC
 
 a.) Logical View:
-![Logical View Diagram img1](Screenshot 2026-02-27 223141.png)
-![Logical View Diagram img2](Screenshot 2026-02-27 232050.png)
+![Logical View Diagram img1](Screenshot%202026-02-27%20223141.png)
+![Logical View Diagram img2](Screenshot%202026-02-27%20232050.png)
 
 The Fins system follows a layered logical structure composed of the user interface, business logic, and local data storage. The user interacts with the application through the UI layer, which includes the dashboard, expense entry page, summary page, weekly view, and budget settings. User actions from the UI are passed to the business logic layer, which contains managers responsible for handling expenses, categories, budgets, analytics generation, and notification scheduling. This layer processes user input, performs validation, calculates summaries, and prepares data for display. The business logic communicates with the data layer, which uses local SQLite storage to persist financial records. Since the system is offline-first, all data operations occur locally without external servers. For reminders, the notification scheduler interacts with the Android notification system, which delivers alerts back to the user through the UI. This logical separation improves maintainability and clearly defines how system components collaborate.
 
