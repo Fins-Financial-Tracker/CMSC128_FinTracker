@@ -1,3 +1,20 @@
+# CMSC129 Activity 1 LEC
+
+a.) Logical View:
+![Logical View Diagram img1](Screenshot%202026-02-27%20223141.png)
+![Logical View Diagram img2](Screenshot%202026-02-27%20232050.png)
+
+The Fins system follows a layered logical structure composed of the user interface, business logic, and local data storage. The user interacts with the application through the UI layer, which includes the dashboard, expense entry page, summary page, weekly view, and budget settings. User actions from the UI are passed to the business logic layer, which contains managers responsible for handling expenses, categories, budgets, analytics generation, and notification scheduling. This layer processes user input, performs validation, calculates summaries, and prepares data for display. The business logic communicates with the data layer, which uses local SQLite storage to persist financial records. Since the system is offline-first, all data operations occur locally without external servers. For reminders, the notification scheduler interacts with the Android notification system, which delivers alerts back to the user through the UI. This logical separation improves maintainability and clearly defines how system components collaborate.
+
+
+b.) Software Architecture
+
+Pattern chosen: Model-View-ViewModel
+
+Fins’ current software structure pattern resembles the Model-View-ViewModel or MVVM. It is a widely known pattern for MVVM for mobile applications. It is an architectural pattern that differentiates the user interface (UI) of the app from its backend logic. This is used a lot since it helps improve the app’s maintainability. Although not explicitly said, it can be observed in our application. Firstly, the view layer is implemented using Flutter’s widgets, which handle the UI for the homepage, adding income or expenses, the dashboard, and more. This part displays the UI of our system and does not directly access the database operations. On the other hand, the ViewModel acts as the bridge between the View and the Model. It shows the presentation with the data that was from the Model. In simple words, it handles user interaction and updates the model, which results in the updates that can be seen by the user. The Model serves as the foundation of the Fins architecture, representing the data structures. It is responsible for managing all core data, including income entries, expense records, and summaries. Since Fins is currently designed for offline use, the Model does not rely on communication with a remote server. Instead, it interacts directly with local storage to save, retrieve and update financial data. 
+
+In summary, adopting the MVVM pattern within the Fins application provides a robust framework that balances UI responsiveness with data integrity. By separating the Flutter widgets (View) from the data handling (Model) through a mediating layer (ViewModel), the app achieves a high level of modularity. This structure not only makes the code easier to test and maintain but also ensures that the financial tracking experience is seamless for the user. 
+
 # Creating the App 
 
 >> flutter clean                                                                       
