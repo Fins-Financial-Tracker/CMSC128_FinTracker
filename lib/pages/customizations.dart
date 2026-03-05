@@ -4,7 +4,13 @@ import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
-import 'dart:io';
+import 'package:flutter/foundation.dart';
+
+bool get _supportsNotifications =>
+    !kIsWeb &&
+    (defaultTargetPlatform == TargetPlatform.android ||
+     defaultTargetPlatform == TargetPlatform.iOS ||
+     defaultTargetPlatform == TargetPlatform.windows);
 
 class CustomizationPage extends StatefulWidget {
   const CustomizationPage({super.key});
@@ -41,10 +47,7 @@ class _CustomizationPageState extends State<CustomizationPage> {
     super.initState();
     tz.initializeTimeZones();
     // Initialize notifications only on supported platforms (Android, iOS, macOS, Linux)
-    if (Platform.isAndroid ||
-        Platform.isIOS ||
-        Platform.isMacOS ||
-        Platform.isLinux) {
+    if (_supportsNotifications) {
       _initializeNotifications();
     }
     _loadExistingSettings();
@@ -219,10 +222,7 @@ class _CustomizationPageState extends State<CustomizationPage> {
       _savedBudget = budgetToSave;
     });
     // Optionally (re)schedule reminders based on current settings
-    if (Platform.isAndroid ||
-        Platform.isIOS ||
-        Platform.isMacOS ||
-        Platform.isLinux) {
+    if (_supportsNotifications) {
       if (_notificationsEnabled) {
         await _scheduleReminder();
       } else {
@@ -231,10 +231,7 @@ class _CustomizationPageState extends State<CustomizationPage> {
     }
 
     // Show count of pending scheduled notifications
-    if (Platform.isAndroid ||
-        Platform.isIOS ||
-        Platform.isMacOS ||
-        Platform.isLinux) {
+    if (_supportsNotifications) {
       final pending = await flutterLocalNotificationsPlugin
           .pendingNotificationRequests();
       ScaffoldMessenger.of(context).showSnackBar(
@@ -293,10 +290,7 @@ class _CustomizationPageState extends State<CustomizationPage> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('notificationsEnabled', _notificationsEnabled);
     if (!enabled) {
-      if (Platform.isAndroid ||
-          Platform.isIOS ||
-          Platform.isMacOS ||
-          Platform.isLinux) {
+      if (_supportsNotifications){
         await flutterLocalNotificationsPlugin.cancelAll();
       }
     }
@@ -512,10 +506,7 @@ class _CustomizationPageState extends State<CustomizationPage> {
 
   // Inspect currently scheduled notifications for debugging/test
   Future<void> _checkPendingNotifications() async {
-    if (Platform.isAndroid ||
-        Platform.isIOS ||
-        Platform.isMacOS ||
-        Platform.isLinux) {
+    if (_supportsNotifications) {
       final pending = await flutterLocalNotificationsPlugin
           .pendingNotificationRequests();
       for (final p in pending) {

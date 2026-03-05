@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../pages/expense_model.dart';
@@ -5,14 +6,14 @@ import '../pages/expense_model.dart';
 class DBHelper {
   static Database? _db;
 
-  Future<Database> get database async {
+  Future<Database?> get database async {
+    if (kIsWeb) return null; // web not supported
     _db ??= await initDB();
     return _db!;
   }
 
   Future<Database> initDB() async {
     final path = join(await getDatabasesPath(), 'expenses.db');
-    // print(path);
     return await openDatabase(
       path,
       version: 1,
@@ -33,34 +34,36 @@ class DBHelper {
 
   Future<void> insertExpense(Expense e) async {
     final db = await database;
+    if (db == null) return; // skip on web
     final id = await db.insert(
         'expenses',
         e.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace,
     );
     e.id = id;
-   }
+  }
 
   Future<List<Expense>> getAllExpenses() async {
     final db = await database;
+    if (db == null) return []; // return empty list on web
     final maps = await db.query('expenses');
-
     return maps.map((e) => Expense.fromMap(e)).toList();
   }
 
   Future<void> deleteExpense(int id) async {
     final db = await database;
+    if (db == null) return;
     await db.delete('expenses', where: 'id = ?', whereArgs: [id]);
   }
 
   Future<void> updateExpense(Expense e) async {
     final db = await database;
+    if (db == null) return;
     await db.update(
         'expenses',
         e.toMap(),
         where: 'id = ?',
         whereArgs: [e.id],
     );
-    }
-
+  }
 }
