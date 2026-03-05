@@ -1,6 +1,7 @@
 import 'package:fins/database/db_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.dart';
+import 'package:flutter/foundation.dart';
 
 import 'pages/homepage.dart';
 import 'pages/summary.dart';
@@ -21,13 +22,17 @@ import 'dart:io'; // <-- New Import
 ===============
 */ 
 void main() {
-  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-    // Initialize FFI database factory for desktop
+  WidgetsFlutterBinding.ensureInitialized(); 
+
+  if (!kIsWeb && (
+    defaultTargetPlatform == TargetPlatform.windows ||
+    defaultTargetPlatform == TargetPlatform.linux ||
+    defaultTargetPlatform == TargetPlatform.macOS
+  )) {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
   }
-  // This line is good practice for Flutter startup
-  WidgetsFlutterBinding.ensureInitialized();
+
   runApp(const MyApp());
 }
 

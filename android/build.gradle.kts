@@ -1,12 +1,15 @@
+plugins {
+    id("com.android.application") apply false
+    id("com.android.library") apply false
+    id("org.jetbrains.kotlin.jvm") apply false
+}
+
 allprojects {
     repositories {
         google()
         mavenCentral()
     }
 }
-
-// Use the default Gradle build directories expected by Flutter.
-// Overriding buildDirectory to a custom path can break tooling.
 
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
