@@ -6,11 +6,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
 import 'package:flutter/foundation.dart';
 
+
 bool get _supportsNotifications =>
     !kIsWeb &&
     (defaultTargetPlatform == TargetPlatform.android ||
-     defaultTargetPlatform == TargetPlatform.iOS ||
-     defaultTargetPlatform == TargetPlatform.windows);
+     defaultTargetPlatform == TargetPlatform.iOS);
 
 class CustomizationPage extends StatefulWidget {
   const CustomizationPage({super.key});
@@ -45,7 +45,6 @@ class _CustomizationPageState extends State<CustomizationPage> {
   @override
   void initState() {
     super.initState();
-    tz.initializeTimeZones();
     // Initialize notifications only on supported platforms (Android, iOS, macOS, Linux)
     if (_supportsNotifications) {
       _initializeNotifications();
@@ -74,6 +73,11 @@ class _CustomizationPageState extends State<CustomizationPage> {
         print('Notification tapped with payload: ${response.payload}');
       },
     );
+    final androidImplementation =
+        flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+
+    await androidImplementation?.requestNotificationsPermission();
   }
 
   //Notification schedule
@@ -183,19 +187,15 @@ class _CustomizationPageState extends State<CustomizationPage> {
   void _saveCustomizations() async {
     _budgetAmount = _budgetController.text.trim();
 
-    // Accept existing saved budget if input is empty; otherwise sanitize and parse
     double? _parseBudget(String text) {
       final cleaned = text.replaceAll(RegExp(r'[^0-9\.]'), '');
       if (cleaned.isEmpty) return null;
       return double.tryParse(cleaned);
     }
 
-    double? budgetToSave;
-    if (_budgetAmount.isEmpty) {
-      budgetToSave = _savedBudget; // keep previously saved budget
-    } else {
-      budgetToSave = _parseBudget(_budgetAmount);
-    }
+    double? budgetToSave = _budgetAmount.isEmpty 
+        ? _savedBudget 
+        : _parseBudget(_budgetAmount);
 
     if (budgetToSave == null || budgetToSave < 0) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -204,58 +204,47 @@ class _CustomizationPageState extends State<CustomizationPage> {
       return;
     }
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setDouble('budgetAmount', budgetToSave);
-    await prefs.setString(
-      'budgetCycle',
-      _selectedBudgetFrequency,
-    ); // 'Weekly' | 'Monthly'
-    await prefs.setBool('notificationsEnabled', _notificationsEnabled);
-    // Start a new cycle now
-    await prefs.setInt(
-      'cycleStartEpochMs',
-      DateTime.now().millisecondsSinceEpoch,
-    );
-    prefs.setBool("isFirstTime", false); // mark setup completed
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setDouble('budgetAmount', budgetToSave);
+      await prefs.setString('budgetCycle', _selectedBudgetFrequency);
+      await prefs.setBool('notificationsEnabled', _notificationsEnabled);
+      await prefs.setInt('cycleStartEpochMs', DateTime.now().millisecondsSinceEpoch);
+      // CRITICAL: Set this to false so LandingPage is skipped next time
+      await prefs.setBool("isFirstTime", false); 
 
-    setState(() {
-      _savedBudget = budgetToSave;
-    });
-    // Optionally (re)schedule reminders based on current settings
-    if (_supportsNotifications) {
-      if (_notificationsEnabled) {
-        await _scheduleReminder();
-      } else {
-        await flutterLocalNotificationsPlugin.cancelAll();
+      setState(() {
+        _savedBudget = budgetToSave;
+      });
+
+      // Handle Notifications with error safety
+      if (_supportsNotifications) {
+        try {
+          if (_notificationsEnabled) {
+            await _scheduleReminder();
+          } else {
+            await flutterLocalNotificationsPlugin.cancelAll();
+          }
+        } catch (e) {
+          debugPrint("Notification Error: $e");
+          // We continue anyway so the user isn't stuck on this page
+        }
       }
-    }
 
-    // Show count of pending scheduled notifications
-    if (_supportsNotifications) {
-      final pending = await flutterLocalNotificationsPlugin
-          .pendingNotificationRequests();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            '${pending.length} pending notifications found (see console)',
-          ),
-        ),
+      if (!mounted) return;
+
+      // Navigate and clear the stack to prevent nested Scaffolds
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const ExpenseHomePage()),
+        (route) => false,
       );
-    } else {
+      
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Notifications not supported on Windows; settings saved.',
-          ),
-        ),
+        SnackBar(content: Text('Error saving settings: $e')),
       );
     }
-
-    // Continue to Home page after saving
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const ExpenseHomePage()),
-    );
   }
 
   Future<void> _loadExistingSettings() async {

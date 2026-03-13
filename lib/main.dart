@@ -13,6 +13,9 @@ import 'pages/landing.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
+
 import 'package:sqflite_common_ffi/sqflite_ffi.dart'; 
 // import 'dart:io'; // <-- New Import
 
@@ -21,8 +24,10 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
   ENTRY POINT
 ===============
 */ 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized(); 
+  tz.initializeTimeZones();
+  tz.setLocalLocation(tz.getLocation('Asia/Manila'));
 
   if (!kIsWeb && (
     defaultTargetPlatform == TargetPlatform.windows ||
@@ -65,7 +70,7 @@ class MyApp extends StatelessWidget {
 
 Future<bool> _shouldShowLanding() async {
   // Debug override: set to true to always show LandingPage during testing
-  const bool kForceShowLanding = true;
+  const bool kForceShowLanding = false;
   if (kForceShowLanding) return true;
   final prefs = await SharedPreferences.getInstance();
   // Default to true on first run if not set
