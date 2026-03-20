@@ -136,20 +136,66 @@ class _HomePageState extends State<HomePage>
     bool undone = false;
 
     messenger.hideCurrentSnackBar();
-    messenger
-        .showSnackBar(
+    messenger.showSnackBar(
           SnackBar(
-            content: Text('Deleted "${item.name}"'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
             duration: const Duration(seconds: 5),
-            action: SnackBarAction(
-              label: 'Undo',
-              onPressed: () {
-                undone = true;
-                // Restore item at original position
-                setState(() {
-                  HomePage.expenses.insert(index, item);
-                });
-              },
+            content: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: const Color.fromARGB(185, 28, 35, 64),
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.18),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.delete_outline_rounded, color: Colors.white70, size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Deleted "${item.name}"',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      undone = true;
+                      messenger.hideCurrentSnackBar();
+                      setState(() {
+                        HomePage.expenses.insert(index, item);
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'Undo',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         )
