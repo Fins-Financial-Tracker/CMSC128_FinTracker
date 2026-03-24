@@ -30,6 +30,8 @@ class _HomePageState extends State<HomePage>
   late TabController _tabController;
   late DateTime _currentWeekStart;
 
+  String _budgetMode = 'weekly'; //default to weekly
+
   Future<void> loadExpenses() async {
     final data = await DBHelper().getAllExpenses();
     setState(() {
@@ -64,11 +66,29 @@ class _HomePageState extends State<HomePage>
       if (!_tabController.indexIsChanging) setState(() {});
     });
   }
-
+  
   Future<void> _loadBudget() async {
-    final prefs = await SharedPreferences.getInstance();
-    final saved = prefs.getDouble('budgetAmount');
-    if (saved != null) setState(() => HomePage.userBudget = saved);
+  final prefs = await SharedPreferences.getInstance();
+
+  final savedBudget = prefs.getDouble('budgetAmount');
+  final savedMode = prefs.getString('budgetMode'); 
+
+  setState(() {
+    if (savedBudget != null) {
+      HomePage.userBudget = savedBudget;
+    }
+    if (savedMode != null) {
+      _budgetMode = savedMode; 
+    }
+  });
+}
+
+  double _calculateMonthlySpent(){
+    final now = DateTime.now();
+    
+    return HomePage.expenses
+        .where((e) => e.date.month == now.month && e.date.year == now.year)
+        .fold(0.0, (sum, e) => sum + e.amount); 
   }
 
   @override
@@ -298,6 +318,8 @@ class _HomePageState extends State<HomePage>
                 allExpenses: HomePage.expenses,
                 weekDates: weekDates,
                 userBudget: HomePage.userBudget,
+                budgetMode: _budgetMode,
+                monthlySpent: _calculateMonthlySpent(),
                 onEdit: _openEditExpenseDialog,
                 onDelete: _deleteExpenseWithUndo,
                 onSummaryTap: widget.onSummaryTap ?? () {},
