@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../builders/designs/bubble_background.dart';
 import '../../builders/widgets/forms/addEdit_widget.dart';
 import '../../expense_model.dart';
 import '../../builders/designs/colors.dart';
+import '../../../utils/receipt_scanner_service.dart';
+
 
 
 class AddExpensePage extends StatefulWidget {
@@ -21,6 +24,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
   String category = 'food';
   String details  = '';
   late DateTime selectedDate;
+  bool isProcessing = false;
 
   @override
   void initState() {
@@ -30,6 +34,58 @@ class _AddExpensePageState extends State<AddExpensePage> {
       widget.initialDate.month,
       widget.initialDate.day,
     );
+    ReceiptScannerService.initialize();
+  }
+
+  Future<void> _scanFromSource(ImageSource source) async {
+    try {
+      setState(() => isProcessing = true);
+
+      final receiptData = await ReceiptScannerService.scanImage(source);
+      if (receiptData == null) {
+        setState(() => isProcessing = false);
+        return;
+      }
+
+      setState(() {
+        // Prefill amount from receipt total
+        if (receiptData.total != null) {
+          amount = receiptData.total!;
+        }
+
+        // Prefill name from store name
+        if (receiptData.storeName != null && receiptData.storeName!.isNotEmpty) {
+          name = receiptData.storeName!;
+        }
+
+        // Store items details
+        if (receiptData.items.isNotEmpty) {
+          details = receiptData.items.join("\n");
+        }
+
+        isProcessing = false;
+      });
+
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Receipt scanned successfully!'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() => isProcessing = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error scanning receipt: $e'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -122,6 +178,35 @@ class _AddExpensePageState extends State<AddExpensePage> {
                               selectedDate: selectedDate,
                               onDateChanged: (d) => setState(() => selectedDate = d),
                             ),
+                            const SizedBox(height: 14),
+
+                            // Receipt
+                            buildLabel('Receipt'),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                IconButton(
+                                  onPressed: isProcessing ? null : () => _scanFromSource(ImageSource.camera),
+                                  icon: const Icon(Icons.camera_alt),
+                                  tooltip: 'Take photo',
+                                ),
+                                const SizedBox(width: 16),
+                                IconButton(
+                                  onPressed: isProcessing ? null : () => _scanFromSource(ImageSource.gallery),
+                                  icon: const Icon(Icons.image),
+                                  tooltip: 'Select image',
+                                ),
+                                if (isProcessing)
+                                  const Padding(
+                                    padding: EdgeInsets.only(left: 8.0),
+                                    child: SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    ),
+                                  ),
+                              ],
+                            ),
                             const SizedBox(height: 24),
 
                             // Add Expense button
@@ -199,5 +284,11 @@ class _AddExpensePageState extends State<AddExpensePage> {
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    ReceiptScannerService.dispose();
+    super.dispose();
   }
 }

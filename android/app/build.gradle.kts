@@ -1,4 +1,4 @@
-﻿plugins {
+plugins {
     id("com.android.application")
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
@@ -28,7 +28,7 @@ android {
         applicationId = "com.example.fins"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        minSdk = flutter.minSdkVersion //flutter.minSdkVersion
         // Match targetSdk to installed API level
         targetSdk = 36
         versionCode = flutter.versionCode
