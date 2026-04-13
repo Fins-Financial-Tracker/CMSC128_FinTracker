@@ -98,7 +98,17 @@ Widget buildExpenseCategoryDropdown({
   required String value,
   required ValueChanged<String?> onChanged,
 }) {
-  const validCategories = ['transpo', 'food', 'education', 'wants'];
+  const validCategories = [
+    'transpo',
+    'food',
+    'school',
+    'groceries',
+    'bill',
+    'custom',
+    // Backward compatibility for older saved entries.
+    'education',
+    'wants',
+  ];
   final safeValue = validCategories.contains(value) ? value : 'food';
 
   return Container(
@@ -121,6 +131,10 @@ Widget buildExpenseCategoryDropdown({
         items: const [
           DropdownMenuItem(value: 'transpo',   child: Text('Transpo')),
           DropdownMenuItem(value: 'food',      child: Text('Food')),
+          DropdownMenuItem(value: 'school',    child: Text('School')),
+          DropdownMenuItem(value: 'groceries', child: Text('Groceries')),
+          DropdownMenuItem(value: 'bill',      child: Text('Bill')),
+          DropdownMenuItem(value: 'custom',    child: Text('Custom')),
           DropdownMenuItem(value: 'education', child: Text('Education')),
           DropdownMenuItem(value: 'wants',     child: Text('Wants')),
         ],
