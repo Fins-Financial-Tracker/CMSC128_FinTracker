@@ -140,13 +140,19 @@ class _SummaryPageState extends State<SummaryPage> {
   Color _getColorForCategory(String category) {
     switch (category.toLowerCase()) {
       case 'food':
-        return const Color.fromARGB(255, 253, 53, 53);
+        return const Color.fromARGB(255, 190, 173, 124);
+      case 'school':
       case 'education':
-        return const Color.fromARGB(255, 25, 113, 0);
+        return const Color(0xFFFF7A45);
       case 'transpo':
-        return const Color.fromARGB(255, 53, 73, 229);
+        return const Color(0xFF4D78E6);
+      case 'groceries':
+        return const Color(0xFF8AD99A);
+      case 'bill':
+        return const Color.fromARGB(255, 117, 197, 213);
+      case 'custom':
       case 'wants':
-        return Colors.purple.shade600;
+        return const Color.fromARGB(255, 187, 107, 227);
       default:
         return Colors.blueGrey.shade400;
     }
@@ -156,12 +162,18 @@ class _SummaryPageState extends State<SummaryPage> {
     switch (category.toLowerCase()) {
       case 'food':
         return Icons.restaurant;
+      case 'school':
       case 'education':
         return Icons.school;
       case 'transpo':
         return Icons.directions_car;
+      case 'groceries':
+        return Icons.local_grocery_store;
+      case 'bill':
+        return Icons.receipt;
+      case 'custom':
       case 'wants':
-        return Icons.shopping_bag;
+        return Icons.account_balance_wallet;
       default:
         return Icons.category;
     }
