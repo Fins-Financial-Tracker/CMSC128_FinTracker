@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 Widget buildItemRow({
-  required dynamic theme,
   required String label,
   required IconData icon,
   Widget? trailing,
@@ -20,15 +19,14 @@ Widget buildItemRow({
     child: Column(
       children: [
         Material(
-          color: theme.container,
           child: ListTile(
-            leading: Icon(icon, color: theme.icon),
-            title: Text(label, style: TextStyle(color: theme.bodyText)),
+            leading: Icon(icon),
+            title: Text(label),
             onTap: onTap,
             trailing: trailing,
             ),
           ),
-        if (!isLastRow) Divider(height: 1, color: theme.divider, indent: 16, endIndent: 16),
+        if (!isLastRow) Divider(height: 1, indent: 16, endIndent: 16),
       ],
     ),
   );
