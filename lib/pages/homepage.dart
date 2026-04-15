@@ -220,10 +220,15 @@ class _HomePageState extends State<HomePage>
         actions: [
           IconButton(
             icon: const Icon(Icons.calendar_month, color: Colors.black),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const MonthlyViewPage()),
-            ),
+            // Refreshes the entire home page after returning from mothly view page
+            // Updates the added expense from the monthly view page to the home page
+            onPressed: () async { 
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const MonthlyViewPage()),
+              );
+              loadExpenses();
+            },
           ),
           IconButton(
             icon: const Icon(Icons.settings, color: Colors.black),
