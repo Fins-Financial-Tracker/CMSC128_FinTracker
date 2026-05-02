@@ -64,14 +64,16 @@ class SavingsAnalyzer {
       ));
     }
 
-    // Weekend spending tip
+    // Weekend spending tip — guard against weekdayAvg == 0 (all expenses on weekends)
     final weekendData = _agg.weekendVsWeekday(thisMonth);
-    if (weekendData['weekendAvg']! > weekendData['weekdayAvg']! * 1.3) {
+    final double wkEnd = weekendData['weekendAvg']!;
+    final double wkDay = weekendData['weekdayAvg']!;
+    if (wkDay > 0 && wkEnd > wkDay * 1.3) {
+      final double pct = ((wkEnd / wkDay) - 1) * 100;
       insights.add(FinancialInsight(
         title: 'Set a Weekend Budget',
-        message: 'You spend '
-            '${((weekendData['weekendAvg']! / weekendData['weekdayAvg']! - 1) * 100).toStringAsFixed(0)}% '
-            'more on weekends than weekdays. Setting a weekend cash limit can help significantly.',
+        message: 'You spend ${pct.toStringAsFixed(0)}% more on weekends than weekdays. '
+            'Setting a weekend cash limit can help significantly.',
         type: InsightType.savingsTip,
         severity: InsightSeverity.neutral,
         emoji: '📅',
