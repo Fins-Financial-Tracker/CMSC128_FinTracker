@@ -20,12 +20,19 @@ class _EditExpensePageState extends State<EditExpensePage> {
   late String name;
   late String amountText;
   late String category;
+  late String customCategory;
   late String details;
-  late DateTime selectedDate;
+  late DateTime selectedDate; 
 
   late TextEditingController _nameController;
   late TextEditingController _amountController;
   late TextEditingController _detailsController;
+  late TextEditingController _customCategoryController;
+
+   // known fixed categories
+  static const _knownCategories = [
+    'transpo', 'food', 'school', 'groceries', 'bill', 'education', 'wants',
+  ];
 
   @override
   void initState() {
@@ -36,9 +43,19 @@ class _EditExpensePageState extends State<EditExpensePage> {
     details      = widget.expense.details;
     selectedDate = widget.expense.date;
 
+    final savedCategory = widget.expense.category;
+    if (_knownCategories.contains(savedCategory)) {
+      category       = savedCategory;
+      customCategory = '';
+    } else {
+      category       = 'custom';
+      customCategory = savedCategory;
+    }
+
     _nameController    = TextEditingController(text: name);
     _amountController  = TextEditingController(text: amountText);
     _detailsController = TextEditingController(text: details);
+     _customCategoryController = TextEditingController(text: customCategory);
   }
 
   @override
@@ -46,6 +63,7 @@ class _EditExpensePageState extends State<EditExpensePage> {
     _nameController.dispose();
     _amountController.dispose();
     _detailsController.dispose();
+    _customCategoryController.dispose();
     super.dispose();
   }
 
@@ -58,7 +76,7 @@ class _EditExpensePageState extends State<EditExpensePage> {
         id:       widget.expense.id,
         name:     _nameController.text.trim(),
         amount:   amount,
-        category: category,
+        category: category == 'custom' ? customCategory.trim() : category,
         date:     selectedDate,
         details:  _detailsController.text.trim(),
       );
@@ -146,11 +164,35 @@ class _EditExpensePageState extends State<EditExpensePage> {
                             buildLabel('Category'),
                             buildExpenseCategoryDropdown(
                               value: category,
-                              onChanged: (v) {
-                                if (v != null) setState(() => category = v);
+                               onChanged: (v) {
+                                if (v != null) {
+                                  setState(() {
+                                    category = v;
+                                    if (category != 'custom') {
+                                      customCategory = '';
+                                    }
+                                  });
+                                }
                               },
                             ),
                             const SizedBox(height: 14),
+
+                            if (category == 'custom') ...[
+                              buildLabel('Custom Category'),
+                              buildTextInput(
+                                controller: _customCategoryController,
+                                hint: 'Enter custom category',
+                                onChanged: (v) => customCategory = v,
+                                validator: (v) {
+                                  if (category == 'custom' &&
+                                      (v == null || v.trim().isEmpty)) {
+                                    return 'Enter a custom category';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 14),
+                            ],
 
                             // Date Spent
                             buildLabel('Date Spent'),

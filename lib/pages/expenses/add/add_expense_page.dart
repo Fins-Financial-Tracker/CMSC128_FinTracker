@@ -20,6 +20,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
   String amount   = '';
   String category = 'food';
   String details  = '';
+  String customCategory = '';
   late DateTime selectedDate;
 
   @override
@@ -79,7 +80,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
                             // Title
                             buildLabel('Title'),
                             buildTextInput(
-                              hint: 'Enter description here',
+                              hint: 'Enter expense name here',
                               onChanged: (v) => name = v,
                               validator: (v) =>
                                   v == null || v.isEmpty ? 'Enter a name' : null,
@@ -109,11 +110,34 @@ class _AddExpensePageState extends State<AddExpensePage> {
                             buildLabel('Category'),
                             buildExpenseCategoryDropdown(
                               value: category,
-                              onChanged: (v) {
-                                if (v != null) setState(() => category = v);
+                               onChanged: (v) {
+                                if (v != null) {
+                                  setState(() {
+                                    category = v;
+                                    if (category != 'custom') {
+                                      customCategory = '';
+                                    }
+                                  });
+                                }
                               },
                             ),
                             const SizedBox(height: 14),
+
+                            if (category == 'custom') ...[
+                              buildLabel('Custom Category'),
+                              buildTextInput(
+                                hint: 'Enter custom category',
+                                onChanged: (v) => customCategory = v,
+                                validator: (v) {
+                                  if (category == 'custom' &&
+                                      (v == null || v.trim().isEmpty)) {
+                                    return 'Enter a custom category';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 14),
+                            ],
 
                             // Date Spent
                             buildLabel('Date Spent'),

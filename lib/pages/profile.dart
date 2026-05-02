@@ -8,7 +8,7 @@ class ProfilePage extends StatelessWidget {
     return Scaffold(
       body: Center(
         child: Text(
-          "Profile Page (To be implemented soon!)",
+         "AI HERE",
           style: TextStyle(fontSize: 24),
         ),
       ),

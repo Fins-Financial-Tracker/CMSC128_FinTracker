@@ -6,6 +6,8 @@ import 'monthly_view.dart';
 import 'expenses/edit/edit_expense_page.dart';
 import '../utils/date_utils.dart';
 import 'builders/widgets/home/day_page.dart';
+import 'customizations.dart';
+import 'settings_page.dart';
 
 class HomePage extends StatefulWidget {
   final VoidCallback? onSummaryTap;
@@ -29,6 +31,8 @@ class _HomePageState extends State<HomePage>
   late String currentMonthName;
   late TabController _tabController;
   late DateTime _currentWeekStart;
+
+  String _budgetMode = 'weekly'; //default to weekly
 
   Future<void> loadExpenses() async {
     final data = await DBHelper().getAllExpenses();
@@ -64,11 +68,29 @@ class _HomePageState extends State<HomePage>
       if (!_tabController.indexIsChanging) setState(() {});
     });
   }
-
+  
   Future<void> _loadBudget() async {
-    final prefs = await SharedPreferences.getInstance();
-    final saved = prefs.getDouble('budgetAmount');
-    if (saved != null) setState(() => HomePage.userBudget = saved);
+  final prefs = await SharedPreferences.getInstance();
+
+  final savedBudget = prefs.getDouble('budgetAmount');
+  final savedMode = prefs.getString('budgetMode'); 
+
+  setState(() {
+    if (savedBudget != null) {
+      HomePage.userBudget = savedBudget;
+    }
+    if (savedMode != null) {
+      _budgetMode = savedMode; 
+    }
+  });
+}
+
+  double _calculateMonthlySpent(){
+    final now = DateTime.now();
+    
+    return HomePage.expenses
+        .where((e) => e.date.month == now.month && e.date.year == now.year)
+        .fold(0.0, (sum, e) => sum + e.amount); 
   }
 
   @override
@@ -197,16 +219,32 @@ class _HomePageState extends State<HomePage>
         ),
         centerTitle: true,
         actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 12),
-            padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 6),
-            child: IconButton(
-              icon: const Icon(Icons.calendar_month, color: Colors.black),
-              onPressed: () => Navigator.push(
+          IconButton(
+            icon: const Icon(Icons.calendar_month, color: Colors.black),
+            // Refreshes the entire home page after returning from mothly view page
+            // Updates the added expense from the monthly view page to the home page
+            onPressed: () async { 
+              await Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const MonthlyViewPage()),
-              ),
-            ),
+              );
+              loadExpenses();
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.palette_outlined, color: Colors.black),
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  // fullscreenDialog prevents the hero transition that causes
+                  // a black flash when the theme changes the scaffold color.
+                  fullscreenDialog: true,
+                  builder: (_) => const SettingsPage(),
+                ),
+              );
+              _loadBudget();
+            },
           ),
         ],
       ),
@@ -298,6 +336,8 @@ class _HomePageState extends State<HomePage>
                 allExpenses: HomePage.expenses,
                 weekDates: weekDates,
                 userBudget: HomePage.userBudget,
+                budgetMode: _budgetMode,
+                monthlySpent: _calculateMonthlySpent(),
                 onEdit: _openEditExpenseDialog,
                 onDelete: _deleteExpenseWithUndo,
                 onSummaryTap: widget.onSummaryTap ?? () {},

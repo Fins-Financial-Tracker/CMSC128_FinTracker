@@ -341,19 +341,31 @@ class _MonthlyViewPageState extends State<MonthlyViewPage> {
         onPressed: () async {
           // Uses the selected day from the calendar as the initial date
           final initialDate = _selectedDay ?? DateTime.now();
-          
-          // Navigates to AddExpensePage
-          await Navigator.push(
+
+          // Navigates to the AddExpensePage and waits for the new expense to be returned
+          final Expense? newExpense = await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (_) => AddExpensePage(initialDate: initialDate),
             ),
           );
-          
+
+          if (newExpense != null) {
+            await DBHelper().insertExpense(newExpense);
+            _loadAllExpenses(); 
+          }
+
+          // Show a confirmation message after adding the expense
+          if (newExpense != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Expense "${newExpense.name}" added successfully.')),
+            );
+          }
+
           _loadAllExpenses(); 
         },
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
 
       
     );
