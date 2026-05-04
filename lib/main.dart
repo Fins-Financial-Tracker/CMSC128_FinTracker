@@ -208,12 +208,13 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      // JAS: i removed the scaffold bg here since the color scheme from app themes is now applied here automatically
+      // Remove Scaffold bg 
+      extendBody: true,
       body: pages[_bottomNavIndex],
       // Code for the add button
       floatingActionButton: FloatingActionButton(
         shape: const CircleBorder(), // <--- Makes the button perfectly round
-        backgroundColor: context.primary,
+        backgroundColor: const Color(0xFF70372A), // brown add button
         onPressed: () async {
           // Check if we are in Home Page (index 0)
           if (_bottomNavIndex == 0) {
@@ -255,8 +256,10 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
             notchSmoothness: NotchSmoothness.softEdge,
             leftCornerRadius: 32,
             rightCornerRadius: 32,
-            activeColor: context.onPrimary,
-            inactiveColor: context.onPrimary.withOpacity(0.3),
+            backgroundColor: const Color.fromARGB(255, 24, 30, 45), // dark blue
+            elevation: 0,
+            activeColor: Colors.white,
+            inactiveColor: Colors.white70,
             // Update the state (selected index) when tapping a tab
             onTap: (index) {
               setState(() => _bottomNavIndex = index);

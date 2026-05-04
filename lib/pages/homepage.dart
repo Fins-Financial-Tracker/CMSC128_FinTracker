@@ -24,7 +24,11 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage>
     with SingleTickerProviderStateMixin {
-  final Color kSelectedBlue = const Color(0xFF5E6C85);
+  final Color kNavbarBlue = const Color.fromARGB(255, 25, 31, 48);
+    final Color kSelectedBlue = const Color(0xFFD9D9D9);
+  final Color kWeekBlue = const Color(0xFF5E6C85);
+  final Color kBrown = const Color(0xFF70372A);
+  final Color kLightBlue = const Color(0xFF9FD3EA);
 
   late List<DateTime> weekDates;
   late String currentMonthName;
@@ -207,22 +211,20 @@ class _HomePageState extends State<HomePage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: kNavbarBlue,
         elevation: 0,
         title: Text(
           currentMonthName,
           style: const TextStyle(
-              color: Colors.black, fontWeight: FontWeight.bold),
+              color: Colors.white, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.calendar_month, color: Colors.black),
-            // Refreshes the entire home page after returning from mothly view page
-            // Updates the added expense from the monthly view page to the home page
-            onPressed: () async { 
+            icon: Icon(Icons.calendar_month, color: kLightBlue),
+            onPressed: () async {
               await Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const MonthlyViewPage()),
@@ -231,7 +233,7 @@ class _HomePageState extends State<HomePage>
             },
           ),
           IconButton(
-            icon: const Icon(Icons.settings, color: Colors.black),
+            icon: Icon(Icons.settings, color: kLightBlue),
             onPressed: () async {
               await Navigator.push(
                 context,
@@ -242,8 +244,16 @@ class _HomePageState extends State<HomePage>
           ),
         ],
       ),
-      body: Column(
+      body: Stack(
         children: [
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/denim/background.png',
+              fit: BoxFit.cover,
+            ),
+          ),
+          Column(
+            children: [
           // Day selector
           Container(
             margin: const EdgeInsets.symmetric(vertical: 10),
@@ -252,7 +262,7 @@ class _HomePageState extends State<HomePage>
             child: Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.arrow_back_ios, size: 18),
+                  icon: const Icon(Icons.arrow_back_ios, size: 18, color: Colors.white),
                   onPressed: () => setState(() {
                     _currentWeekStart =
                         _currentWeekStart.subtract(const Duration(days: 7));
@@ -269,47 +279,54 @@ class _HomePageState extends State<HomePage>
                           [date.weekday - 1];
                       final isSelected = _tabController.index == index;
 
-                      return Expanded(
-                        child: GestureDetector(
-                          onTap: () => _tabController.animateTo(index),
-                          child: Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 4),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? kSelectedBlue
-                                  : const Color(0xFFE0E0E0).withOpacity(0.5),
-                              borderRadius: BorderRadius.circular(25),
-                            ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(dayName,
+                        final bgColor = isSelected ? kSelectedBlue : kWeekBlue;
+                        final dayTextColor = isSelected ? kWeekBlue : Colors.white70;
+                        final dateTextColor = isSelected ? kWeekBlue : Colors.white;
+
+                        return Expanded(
+                          child: GestureDetector(
+                            onTap: () => _tabController.animateTo(index),
+                            child: Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 4),
+                              decoration: BoxDecoration(
+                                color: bgColor,
+                                borderRadius: BorderRadius.circular(25),
+                                boxShadow: isSelected
+                                    ? [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.12),
+                                          blurRadius: 6,
+                                          offset: const Offset(0, 3),
+                                        )
+                                      ]
+                                    : null,
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(dayName,
+                                      style: TextStyle(
+                                          fontSize: 11,
+                                          color: dayTextColor)),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    date.day.toString(),
                                     style: TextStyle(
-                                        fontSize: 11,
-                                        color: isSelected
-                                            ? Colors.white70
-                                            : Colors.grey)),
-                                const SizedBox(height: 4),
-                                Text(
-                                  date.day.toString(),
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: isSelected
-                                        ? Colors.white
-                                        : Colors.grey[700],
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: dateTextColor,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                      );
+                        );
                     }).toList(),
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.arrow_forward_ios, size: 18),
+                  icon: const Icon(Icons.arrow_forward_ios, size: 18, color: Colors.white),
                   onPressed: () => setState(() {
                     _currentWeekStart =
                         _currentWeekStart.add(const Duration(days: 7));
@@ -337,6 +354,8 @@ class _HomePageState extends State<HomePage>
                 onSummaryTap: widget.onSummaryTap ?? () {},
               )).toList(),
             ),
+          ),
+            ],
           ),
         ],
       ),

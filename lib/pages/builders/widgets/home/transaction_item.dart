@@ -39,7 +39,11 @@ class TransactionItem extends StatelessWidget {
     }
 
     return Container(
-      color: const Color(0xFFECF3FA),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFECF3FA),
+        borderRadius: BorderRadius.circular(16),
+      ),
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       child: Row(
         children: [

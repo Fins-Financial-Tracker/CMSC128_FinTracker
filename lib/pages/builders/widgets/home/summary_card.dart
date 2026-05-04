@@ -4,6 +4,8 @@ class SummaryCard extends StatelessWidget {
   final String title;
   final String amount;
 
+  static const Color _brown = Color(0xFF70372A);
+
   const SummaryCard({
     super.key,
     required this.title,
@@ -15,7 +17,7 @@ class SummaryCard extends StatelessWidget {
     return Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: const Color(0xFFDCE8F5),
+          color: _brown,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
@@ -25,7 +27,7 @@ class SummaryCard extends StatelessWidget {
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 12,
-                color: Colors.black87,
+                color: Colors.white,
               ),
             ),
             const SizedBox(height: 5),
@@ -34,7 +36,7 @@ class SummaryCard extends StatelessWidget {
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
-                color: Colors.grey[700],
+                color: Colors.white,
               ),
             ),
           ],
