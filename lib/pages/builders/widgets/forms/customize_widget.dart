@@ -85,7 +85,7 @@ Widget buildNotificationToggle({
       ),
       Switch(
         value: notificationsEnabled,
-        activeColor: colorNavy,
+        activeThumbColor: colorNavy,
         onChanged: onChanged,
       ),
     ],

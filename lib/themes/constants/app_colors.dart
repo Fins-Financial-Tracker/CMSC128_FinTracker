@@ -36,7 +36,7 @@ class _BlueColorCollection{
   final bubble = const Color (0xFFC3D4F0);
   final activeElement = const Color (0xFF1E2A3A);
   final themeItemIcon = const Color(0xFF8694AD);
-  final dateContainer = const Color(0xFF);
+  final dateContainer = const Color(0x000000ff);
 
   // text colors
   final pageTitleText = const Color(0xFF1C2340);

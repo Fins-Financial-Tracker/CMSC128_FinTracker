@@ -1,5 +1,4 @@
 import 'package:fins/database/db_helper.dart';
-import 'package:fins/themes/constants/app_colors.dart';
 import 'package:fins/themes/logic/app_themes.dart';
 import 'package:flutter/material.dart';
 import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.dart';
@@ -9,7 +8,6 @@ import 'pages/homepage.dart';
 import 'pages/summary.dart';
 import 'pages/customizations.dart';
 import 'pages/expenses/add/add_expense_page.dart'; 
-import 'pages/profile.dart';
 import 'pages/expense_model.dart';
 import 'pages/landing.dart';
 import 'utils/notification_helper.dart';
@@ -90,13 +88,20 @@ class _MyAppState extends State<MyApp> {
     _showLandingFuture = _shouldShowLanding();
   }
 
+/*
+===============
+    THEMES 
+===============
+*/ 
   @override
   Widget build(BuildContext context) {
+    // MyApp wraps MaterialAPp in a ValueListenableBuilder to listen to ThemeController.notifier
     return ValueListenableBuilder<AppThemeType>(
       valueListenable: ThemeController.notifier,
       builder: (context, themeType, _){
         return MaterialApp(
           debugShowCheckedModeBanner: false,
+          // When notifier.value changes, Flutter rebuilds and theme:getTheme(themeType) updaes app theme
           theme: getTheme(themeType), // integrate this with your shared preferences for dynamic theme
           home: FutureBuilder<bool>(
             future: _showLandingFuture,

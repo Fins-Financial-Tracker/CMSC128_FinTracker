@@ -1,4 +1,3 @@
-import 'package:fins/pages/builders/designs/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:fins/themes/constants/app_colors.dart';
 import 'package:fins/themes/constants/app_theme_type.dart';
@@ -158,6 +157,7 @@ extension ThemeShortcut on BuildContext {
   Color get hintText => _extra.hintText;
 }
 
+// Map selected AppThemeType to correct ThemeData
 ThemeData getTheme(AppThemeType type) {
   switch (type) {
     case AppThemeType.blue:

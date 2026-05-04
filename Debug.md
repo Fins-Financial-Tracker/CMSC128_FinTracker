@@ -14,3 +14,12 @@ git add -A
 git commit
 git push origin main
 git push -u origin pr-26
+
+<!-- Solution for CMake Error -->
+Remove-Item -Recurse -Force build
+Remove-Item -Recurse -Force .dart_tool
+Remove-Item -Recurse -Force windows\flutter\ephemeral
+
+flutter clean
+flutter pub get
+flutter run -d windows

@@ -1,7 +1,5 @@
-import 'package:fins/themes/constants/app_colors.dart';
 import 'package:fins/themes/logic/app_themes.dart';
 import 'package:flutter/material.dart';
-import 'package:path/path.dart';
 
 class ThemeSelectorPopup extends StatefulWidget{
   final AppThemeType initialTheme;
