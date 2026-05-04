@@ -35,35 +35,63 @@ class _AddExpensePageState extends State<AddExpensePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: colorPageBg,
-      body: Stack(
-        children: [
-          // bg bubbles
-          Bubble(top: -30,  right: -20, size: 160, opacity: 0.45),
-          Bubble(top:  40,  right:  30, size:  80, opacity: 0.30),
-          Bubble(bottom: -40, left: -30, size: 180, opacity: 0.35),
-          Bubble(bottom:  60, left:  20, size:  90, opacity: 0.25),
-          Bubble(bottom: 180, right: -10, size: 110, opacity: 0.20),
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      child: AnimatedContainer(duration: const Duration(milliseconds: 250), curve: Curves.easeInOut, width: 430, 
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.95,
+          maxWidth: 430,
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: Container(
+                  color: colorPageBg,
+                ),
+              ),
 
-          SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(24, 64, 24, 32),
+              // bg bubbles
+              Bubble(top: -30, right: -20, size: 160, opacity: 0.45),
+              Bubble(top: 40, right: 30, size: 80, opacity: 0.30),
+              Bubble(bottom: -40, left: -30, size: 180, opacity: 0.35),
+              Bubble(bottom: 60, left: 20, size: 90, opacity: 0.25),
+              Bubble(bottom: 180, right: -10, size: 110, opacity: 0.20),
+
+            SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     // Page title
-                    const Text(
-                      'Add a new expense',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w800,
-                        color: colorNavy,
-                        letterSpacing: -0.5,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Add a new expense',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                              color: colorNavy,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(
+                            Icons.close_rounded,
+                            color: colorNavy,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 24),
+
+                    const SizedBox(height: 16),
 
                     // card
                     Container(
@@ -82,38 +110,52 @@ class _AddExpensePageState extends State<AddExpensePage> {
                             buildTextInput(
                               hint: 'Enter expense name here',
                               onChanged: (v) => name = v,
-                              validator: (v) =>
-                                  v == null || v.isEmpty ? 'Enter a name' : null,
+                              validator: (v) => v == null || v.isEmpty
+                                  ? 'Enter a name'
+                                  : null,
                             ),
+
                             const SizedBox(height: 14),
 
                             // Amount
                             buildLabel('Amount'),
                             buildTextInput(
                               hint: 'Enter amount here',
-                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                decimal: true,
+                              ),
                               inputFormatters: [
-                                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                                FilteringTextInputFormatter.allow(
+                                  RegExp(r'^\d*\.?\d*'),
+                                ),
                               ],
                               onChanged: (v) => amount = v,
                               validator: (v) {
-                                if (v == null || v.trim().isEmpty) return 'Enter amount';
+                                if (v == null || v.trim().isEmpty) {
+                                  return 'Enter amount';
+                                }
+
                                 final p = double.tryParse(v.trim());
+
                                 if (p == null) return 'Enter valid amount';
-                                if (p <= 0)    return 'Amount must be positive';
+                                if (p <= 0) return 'Amount must be positive';
+
                                 return null;
                               },
                             ),
+
                             const SizedBox(height: 14),
 
                             // Category
                             buildLabel('Category'),
                             buildExpenseCategoryDropdown(
                               value: category,
-                               onChanged: (v) {
+                              onChanged: (v) {
                                 if (v != null) {
                                   setState(() {
                                     category = v;
+
                                     if (category != 'custom') {
                                       customCategory = '';
                                     }
@@ -121,6 +163,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
                                 }
                               },
                             ),
+
                             const SizedBox(height: 14),
 
                             if (category == 'custom') ...[
@@ -133,6 +176,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
                                       (v == null || v.trim().isEmpty)) {
                                     return 'Enter a custom category';
                                   }
+
                                   return null;
                                 },
                               ),
@@ -144,8 +188,11 @@ class _AddExpensePageState extends State<AddExpensePage> {
                             buildDatePicker(
                               context: context,
                               selectedDate: selectedDate,
-                              onDateChanged: (d) => setState(() => selectedDate = d),
+                              onDateChanged: (d) {
+                                setState(() => selectedDate = d);
+                              },
                             ),
+
                             const SizedBox(height: 24),
 
                             // Add Expense button
@@ -154,13 +201,18 @@ class _AddExpensePageState extends State<AddExpensePage> {
                               child: ElevatedButton(
                                 onPressed: () {
                                   if (_formKey.currentState!.validate()) {
+                                    final categoryToSave = category == 'custom'
+                                        ? customCategory
+                                        : category;
+
                                     final newExpense = Expense(
-                                      name: name,
-                                      amount: double.parse(amount),
-                                      category: category,
+                                      name: name.trim(),
+                                      amount: double.parse(amount.trim()),
+                                      category: categoryToSave,
                                       date: selectedDate,
                                       details: details,
                                     );
+
                                     Navigator.pop(context, newExpense);
                                   }
                                 },
@@ -189,38 +241,10 @@ class _AddExpensePageState extends State<AddExpensePage> {
                   ],
                 ),
               ),
-            ),
+            ],
           ),
-
-          // back button
-          SafeArea(
-            child: Align(
-              alignment: Alignment.topLeft,
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      Icon(Icons.arrow_back_ios_new_rounded,
-                          color: colorNavy, size: 16),
-                      SizedBox(width: 4),
-                      Text(
-                        'Back',
-                        style: TextStyle(
-                          color: colorNavy,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
+        ),
+      ),
       ),
     );
   }
