@@ -7,6 +7,7 @@ import 'expenses/edit/edit_expense_page.dart';
 import '../utils/date_utils.dart';
 import 'builders/widgets/home/day_page.dart';
 import 'customizations.dart';
+import 'package:fins/themes/logic/app_themes.dart';
 
 class HomePage extends StatefulWidget {
   final VoidCallback? onSummaryTap;
@@ -221,7 +222,7 @@ class _HomePageState extends State<HomePage>
               alignment: Alignment.center,
               transform: Matrix4.identity()..scale(1.25, 1.0, 1.0),
               child: Image.asset(
-                'assets/images/denim/jean.png',
+                context.jeanAppbarImagePath,
                 fit: BoxFit.fitWidth,
                 alignment: Alignment.center,
               ),
@@ -277,7 +278,7 @@ class _HomePageState extends State<HomePage>
         children: [
           Positioned.fill(
             child: Image.asset(
-              'assets/images/denim/background.png',
+              context.backgroundImagePath,
               fit: BoxFit.cover,
             ),
           ),

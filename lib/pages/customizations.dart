@@ -163,19 +163,13 @@ class _CustomizationPageState extends State<CustomizationPage> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset(
-              'assets/images/denim/background.png',
-              fit: BoxFit.cover,
-            ),
+            child: Image.asset(context.backgroundImagePath, fit: BoxFit.cover),
           ),
           Positioned(
             top: -20,
             left: 0,
             right: 0,
-            child: Image.asset(
-              'assets/images/denim/jean_scrap.png',
-              fit: BoxFit.contain,
-            ),
+            child: Image.asset(context.jeanScrapImagePath, fit: BoxFit.contain),
           ),
           Center(
             child: SingleChildScrollView(
@@ -211,10 +205,8 @@ class _CustomizationPageState extends State<CustomizationPage> {
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(20),
-                          image: const DecorationImage(
-                            image: AssetImage(
-                              'assets/images/denim/leather.png',
-                            ),
+                          image: DecorationImage(
+                            image: AssetImage(context.leatherTextureImagePath),
                             fit: BoxFit.cover,
                           ),
                         ),
@@ -289,7 +281,7 @@ class _CustomizationPageState extends State<CustomizationPage> {
                                           children: [
                                             Positioned.fill(
                                               child: Image.asset(
-                                                'assets/images/denim/button.png',
+                                                context.buttonImagePath,
                                                 fit: BoxFit.fill,
                                               ),
                                             ),

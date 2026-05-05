@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 import '../database/db_helper.dart';
+import 'package:fins/themes/logic/app_themes.dart';
 import 'expense_model.dart';
 
 class SummaryPage extends StatefulWidget {
@@ -335,7 +336,7 @@ class _SummaryPageState extends State<SummaryPage> {
         children: [
           Positioned.fill(
             child: Image.asset(
-              'assets/images/denim/background.png',
+              context.backgroundImagePath,
               fit: BoxFit.cover,
             ),
           ),
@@ -344,7 +345,7 @@ class _SummaryPageState extends State<SummaryPage> {
             left: 0,
             right: 0,
             child: Image.asset(
-              'assets/images/denim/jean_scrap.png',
+              context.jeanScrapImagePath,
               fit: BoxFit.contain,
             ),
           ),
@@ -432,10 +433,8 @@ class _SummaryPageState extends State<SummaryPage> {
                           ),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(14),
-                            image: const DecorationImage(
-                              image: AssetImage(
-                                'assets/images/denim/leather.png',
-                              ),
+                            image: DecorationImage(
+                              image: AssetImage(context.leatherTextureImagePath),
                               fit: BoxFit.cover,
                             ),
                           ),

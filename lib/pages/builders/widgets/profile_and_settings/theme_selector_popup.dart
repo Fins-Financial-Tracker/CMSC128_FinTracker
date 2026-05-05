@@ -26,12 +26,6 @@ class _ThemeSelectorPopupState extends State<ThemeSelectorPopup> {
     _tempSelectedTheme = widget.initialTheme;
   }
 
-  void _handleThemeSelection(AppThemeType choice) {
-    setState(() {
-      _tempSelectedTheme = choice;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -46,7 +40,7 @@ class _ThemeSelectorPopupState extends State<ThemeSelectorPopup> {
             width: double.maxFinite,
             child: GridView.count(
               shrinkWrap: true,
-              crossAxisCount: 3,
+              crossAxisCount: 2,
               mainAxisSpacing: 20,
               crossAxisSpacing: 20,
               physics: const NeverScrollableScrollPhysics(),

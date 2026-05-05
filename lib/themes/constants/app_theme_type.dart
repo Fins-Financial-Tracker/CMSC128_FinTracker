@@ -7,8 +7,4 @@
 enum AppThemeType {
   blue,
   pink,
-  green,
-  orange,
-  cyan,
-  purple,
 }
