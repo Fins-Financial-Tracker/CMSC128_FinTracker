@@ -231,6 +231,22 @@ class _HomePageState extends State<HomePage>
               loadExpenses();
             },
           ),
+
+          IconButton(
+            icon: const Icon(Icons.palette_outlined, color: Colors.black),
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  // fullscreenDialog prevents the hero transition that causes
+                  // a black flash when the theme changes the scaffold color.
+                  fullscreenDialog: true,
+                  builder: (_) => const SettingsPage(),
+                ),
+              );
+              _loadBudget();
+            },
+          ),
         ],
       ),
       body: Column(
