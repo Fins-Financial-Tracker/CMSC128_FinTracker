@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../builders/designs/bubble_background.dart';
 import '../../builders/widgets/forms/addEdit_widget.dart';
 import '../../expense_model.dart';
 import '../../builders/designs/colors.dart';
+import '../../../utils/receipt_scanner_service.dart';
+
 
 
 class AddExpensePage extends StatefulWidget {
   final DateTime initialDate;
   const AddExpensePage({super.key, required this.initialDate});
+  
 
   @override
   State<AddExpensePage> createState() => _AddExpensePageState();
@@ -16,12 +20,15 @@ class AddExpensePage extends StatefulWidget {
 
 class _AddExpensePageState extends State<AddExpensePage> {
   final _formKey = GlobalKey<FormState>();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _amountController = TextEditingController();
   String name     = '';
   String amount   = '';
   String category = 'food';
   String details  = '';
   String customCategory = '';
   late DateTime selectedDate;
+  bool isProcessing = false;
 
   @override
   void initState() {
@@ -31,6 +38,58 @@ class _AddExpensePageState extends State<AddExpensePage> {
       widget.initialDate.month,
       widget.initialDate.day,
     );
+    ReceiptScannerService.initialize();
+  }
+
+  Future<void> _scanFromSource(ImageSource source) async {
+    try {
+      setState(() => isProcessing = true);
+
+      final receiptData = await ReceiptScannerService.scanImage(source);
+      if (receiptData == null) {
+        setState(() => isProcessing = false);
+        return;
+      }
+
+      setState(() {
+      if (receiptData.total != null) {
+        amount = receiptData.total!;
+        _amountController.text = receiptData.total!;
+      }
+
+      if (receiptData.storeName != null && receiptData.storeName!.isNotEmpty) {
+        name = receiptData.storeName!;
+        _nameController.text = receiptData.storeName!;
+      }
+
+      if (receiptData.items.isNotEmpty) {
+        details = receiptData.items.join("\n");
+      }
+
+      isProcessing = false;
+    });
+
+      // Show success message
+      if (receiptData.total == null && receiptData.storeName == null && receiptData.items.isEmpty) {
+        setState(() => isProcessing = false);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No receipt data detected. Try a clearer image.')),
+          );
+        }
+        return;
+      }
+    } catch (e) {
+      setState(() => isProcessing = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error scanning receipt: $e'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -80,7 +139,8 @@ class _AddExpensePageState extends State<AddExpensePage> {
                             // Title
                             buildLabel('Title'),
                             buildTextInput(
-                              hint: 'Enter expense name here',
+                              hint: 'Enter description here',
+                              controller: _nameController,  
                               onChanged: (v) => name = v,
                               validator: (v) =>
                                   v == null || v.isEmpty ? 'Enter a name' : null,
@@ -91,6 +151,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
                             buildLabel('Amount'),
                             buildTextInput(
                               hint: 'Enter amount here',
+                              controller: _amountController, 
                               keyboardType: const TextInputType.numberWithOptions(decimal: true),
                               inputFormatters: [
                                 FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
@@ -145,6 +206,35 @@ class _AddExpensePageState extends State<AddExpensePage> {
                               context: context,
                               selectedDate: selectedDate,
                               onDateChanged: (d) => setState(() => selectedDate = d),
+                            ),
+                            const SizedBox(height: 14),
+
+                            // Receipt
+                            buildLabel('Receipt'),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                IconButton(
+                                  onPressed: isProcessing ? null : () => _scanFromSource(ImageSource.camera),
+                                  icon: const Icon(Icons.camera_alt),
+                                  tooltip: 'Take photo',
+                                ),
+                                const SizedBox(width: 16),
+                                IconButton(
+                                  onPressed: isProcessing ? null : () => _scanFromSource(ImageSource.gallery),
+                                  icon: const Icon(Icons.image),
+                                  tooltip: 'Select image',
+                                ),
+                                if (isProcessing)
+                                  const Padding(
+                                    padding: EdgeInsets.only(left: 8.0),
+                                    child: SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    ),
+                                  ),
+                              ],
                             ),
                             const SizedBox(height: 24),
 
@@ -223,5 +313,13 @@ class _AddExpensePageState extends State<AddExpensePage> {
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _amountController.dispose();
+    ReceiptScannerService.dispose();
+    super.dispose();
   }
 }
