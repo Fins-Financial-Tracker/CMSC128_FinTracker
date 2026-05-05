@@ -32,6 +32,7 @@ class _HomePageState extends State<HomePage>
   late TabController _tabController;
   late DateTime _currentWeekStart;
 
+  bool _isMonthlyView = false;
   String _budgetMode = 'weekly'; //default to weekly
 
   Future<void> loadExpenses() async {
@@ -219,18 +220,37 @@ class _HomePageState extends State<HomePage>
         ),
         centerTitle: true,
         actions: [
+          // IconButton(
+          //   icon: const Icon(Icons.calendar_month, color: Colors.black),
+          //   // Refreshes the entire home page after returning from mothly view page
+          //   // Updates the added expense from the monthly view page to the home page
+          //   onPressed: () async { 
+          //     await Navigator.push(
+          //       context,
+          //       MaterialPageRoute(builder: (_) => const MonthlyViewPage()),
+          //     );
+          //     loadExpenses();
+          //   },
+          // ),               
+        
+  //replace calendar btn behavior with a toggle between weekly and monthly view
           IconButton(
-            icon: const Icon(Icons.calendar_month, color: Colors.black),
-            // Refreshes the entire home page after returning from mothly view page
-            // Updates the added expense from the monthly view page to the home page
-            onPressed: () async { 
-              await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const MonthlyViewPage()),
-              );
-              loadExpenses();
+            icon: Icon(
+              _isMonthlyView ? Icons.view_week : Icons.calendar_month,
+              color: Colors.black,
+            ),
+            onPressed: (){
+                setState((){ 
+                  _isMonthlyView = !_isMonthlyView; // Toggle the view mode
+                });
+             
+               if (_isMonthlyView) {
+                // If switching to monthly view, load expenses to ensure data is up-to-date
+                loadExpenses();
+              }
             },
           ),
+
           IconButton(
             icon: const Icon(Icons.palette_outlined, color: Colors.black),
             onPressed: () async {
@@ -248,9 +268,14 @@ class _HomePageState extends State<HomePage>
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Day selector
+      
+      // body: Column(
+      //   children: [
+      body: _isMonthlyView
+          ? const MonthlyViewPage() // Show monthly view if toggled
+          : Column(
+              children: [
+                      // Day selector
           Container(
             margin: const EdgeInsets.symmetric(vertical: 10),
             height: 90,
