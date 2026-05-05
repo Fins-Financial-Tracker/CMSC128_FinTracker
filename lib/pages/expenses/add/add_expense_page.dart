@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../builders/designs/bubble_background.dart';
-import '../../builders/widgets/forms/addEdit_widget.dart';
 import '../../expense_model.dart';
-import '../../builders/designs/colors.dart';
-
+import 'package:fins/themes/logic/app_themes.dart';
 
 class AddExpensePage extends StatefulWidget {
   final DateTime initialDate;
@@ -16,10 +13,10 @@ class AddExpensePage extends StatefulWidget {
 
 class _AddExpensePageState extends State<AddExpensePage> {
   final _formKey = GlobalKey<FormState>();
-  String name     = '';
-  String amount   = '';
+  String name = '';
+  String amount = '';
   String category = 'food';
-  String details  = '';
+  String details = '';
   String customCategory = '';
   late DateTime selectedDate;
 
@@ -36,20 +33,22 @@ class _AddExpensePageState extends State<AddExpensePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: colorPageBg,
       body: Stack(
         children: [
-          // bg bubbles
-          Bubble(top: -30,  right: -20, size: 160, opacity: 0.45),
-          Bubble(top:  40,  right:  30, size:  80, opacity: 0.30),
-          Bubble(bottom: -40, left: -30, size: 180, opacity: 0.35),
-          Bubble(bottom:  60, left:  20, size:  90, opacity: 0.25),
-          Bubble(bottom: 180, right: -10, size: 110, opacity: 0.20),
+          Positioned.fill(
+            child: Image.asset(context.backgroundImagePath, fit: BoxFit.cover),
+          ),
+          Positioned(
+            top: -20,
+            left: 0,
+            right: 0,
+            child: Image.asset(context.jeanScrapImagePath, fit: BoxFit.contain),
+          ),
 
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(24, 64, 24, 32),
+                padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -57,10 +56,18 @@ class _AddExpensePageState extends State<AddExpensePage> {
                     const Text(
                       'Add a new expense',
                       style: TextStyle(
+                        fontFamily: 'Cartoon',
                         fontSize: 28,
                         fontWeight: FontWeight.w800,
-                        color: colorNavy,
+                        color: Colors.white,
                         letterSpacing: -0.5,
+                        shadows: [
+                          Shadow(
+                            offset: Offset(1, 8),
+                            blurRadius: 0,
+                            color: Color.fromARGB(255, 0, 0, 0),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -68,8 +75,11 @@ class _AddExpensePageState extends State<AddExpensePage> {
                     // card
                     Container(
                       decoration: BoxDecoration(
-                        color: colorCardBg,
                         borderRadius: BorderRadius.circular(20),
+                        image: DecorationImage(
+                          image: AssetImage(context.leatherTextureImagePath),
+                          fit: BoxFit.cover,
+                        ),
                       ),
                       padding: const EdgeInsets.all(20),
                       child: Form(
@@ -78,39 +88,46 @@ class _AddExpensePageState extends State<AddExpensePage> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             // Title
-                            buildLabel('Title'),
-                            buildTextInput(
+                            _buildLabel('Title'),
+                            _buildTextInput(
                               hint: 'Enter expense name here',
                               onChanged: (v) => name = v,
-                              validator: (v) =>
-                                  v == null || v.isEmpty ? 'Enter a name' : null,
+                              validator: (v) => v == null || v.isEmpty
+                                  ? 'Enter a name'
+                                  : null,
                             ),
                             const SizedBox(height: 14),
 
                             // Amount
-                            buildLabel('Amount'),
-                            buildTextInput(
+                            _buildLabel('Amount'),
+                            _buildTextInput(
                               hint: 'Enter amount here',
-                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
                               inputFormatters: [
-                                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                                FilteringTextInputFormatter.allow(
+                                  RegExp(r'^\d*\.?\d*'),
+                                ),
                               ],
                               onChanged: (v) => amount = v,
                               validator: (v) {
-                                if (v == null || v.trim().isEmpty) return 'Enter amount';
+                                if (v == null || v.trim().isEmpty)
+                                  return 'Enter amount';
                                 final p = double.tryParse(v.trim());
                                 if (p == null) return 'Enter valid amount';
-                                if (p <= 0)    return 'Amount must be positive';
+                                if (p <= 0) return 'Amount must be positive';
                                 return null;
                               },
                             ),
                             const SizedBox(height: 14),
 
                             // Category
-                            buildLabel('Category'),
-                            buildExpenseCategoryDropdown(
+                            _buildLabel('Category'),
+                            _buildExpenseCategoryDropdown(
                               value: category,
-                               onChanged: (v) {
+                              onChanged: (v) {
                                 if (v != null) {
                                   setState(() {
                                     category = v;
@@ -124,8 +141,8 @@ class _AddExpensePageState extends State<AddExpensePage> {
                             const SizedBox(height: 14),
 
                             if (category == 'custom') ...[
-                              buildLabel('Custom Category'),
-                              buildTextInput(
+                              _buildLabel('Custom Category'),
+                              _buildTextInput(
                                 hint: 'Enter custom category',
                                 onChanged: (v) => customCategory = v,
                                 validator: (v) {
@@ -140,44 +157,56 @@ class _AddExpensePageState extends State<AddExpensePage> {
                             ],
 
                             // Date Spent
-                            buildLabel('Date Spent'),
-                            buildDatePicker(
+                            _buildLabel('Date Spent'),
+                            _buildDatePicker(
                               context: context,
                               selectedDate: selectedDate,
-                              onDateChanged: (d) => setState(() => selectedDate = d),
+                              onDateChanged: (d) =>
+                                  setState(() => selectedDate = d),
                             ),
                             const SizedBox(height: 24),
 
                             // Add Expense button
                             SizedBox(
-                              height: 52,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  if (_formKey.currentState!.validate()) {
-                                    final newExpense = Expense(
-                                      name: name,
-                                      amount: double.parse(amount),
-                                      category: category,
-                                      date: selectedDate,
-                                      details: details,
-                                    );
-                                    Navigator.pop(context, newExpense);
-                                  }
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: colorNavy,
-                                  foregroundColor: Colors.white,
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                child: const Text(
-                                  'Add Expense',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: 0.4,
+                              height: 70,
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: () {
+                                    if (_formKey.currentState!.validate()) {
+                                      final newExpense = Expense(
+                                        name: name,
+                                        amount: double.parse(amount),
+                                        category: category == 'custom'
+                                            ? customCategory.trim()
+                                            : category,
+                                        date: selectedDate,
+                                        details: details,
+                                      );
+                                      Navigator.pop(context, newExpense);
+                                    }
+                                  },
+                                  borderRadius: BorderRadius.circular(14),
+                                  child: Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      Positioned.fill(
+                                        child: Image.asset(
+                                          context.buttonImagePath,
+                                          fit: BoxFit.fill,
+                                        ),
+                                      ),
+                                      const Text(
+                                        'Add Expense',
+                                        style: TextStyle(
+                                          fontFamily: 'Cartoon',
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: 0.5,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
@@ -203,13 +232,16 @@ class _AddExpensePageState extends State<AddExpensePage> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: const [
-                      Icon(Icons.arrow_back_ios_new_rounded,
-                          color: colorNavy, size: 16),
+                      Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        color: Colors.white,
+                        size: 16,
+                      ),
                       SizedBox(width: 4),
                       Text(
                         'Back',
                         style: TextStyle(
-                          color: colorNavy,
+                          color: Colors.white,
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
@@ -223,5 +255,178 @@ class _AddExpensePageState extends State<AddExpensePage> {
         ],
       ),
     );
+  }
+
+  Widget _buildLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextInput({
+    TextEditingController? controller,
+    required String hint,
+    TextInputType keyboardType = TextInputType.text,
+    List<TextInputFormatter>? inputFormatters,
+    required ValueChanged<String> onChanged,
+    FormFieldValidator<String>? validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
+      onChanged: onChanged,
+      validator: validator,
+      style: const TextStyle(fontSize: 15, color: Colors.white),
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: Colors.white.withOpacity(0.1),
+        hintText: hint,
+        hintStyle: const TextStyle(color: Colors.white70, fontSize: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 15,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: Colors.white, width: 1.5),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: Colors.redAccent, width: 1.2),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildExpenseCategoryDropdown({
+    required String value,
+    required ValueChanged<String?> onChanged,
+  }) {
+    const validCategories = [
+      'transpo',
+      'food',
+      'school',
+      'groceries',
+      'bill',
+      'education',
+      'wants',
+      'custom',
+    ];
+    final safeValue = validCategories.contains(value) ? value : 'food';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: safeValue,
+          isExpanded: true,
+          icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white),
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+          ),
+          dropdownColor: const Color(0xFF70372A),
+          borderRadius: BorderRadius.circular(14),
+          items: const [
+            DropdownMenuItem(value: 'transpo', child: Text('Transpo')),
+            DropdownMenuItem(value: 'food', child: Text('Food')),
+            DropdownMenuItem(value: 'school', child: Text('School')),
+            DropdownMenuItem(value: 'groceries', child: Text('Groceries')),
+            DropdownMenuItem(value: 'bill', child: Text('Bill')),
+            DropdownMenuItem(value: 'education', child: Text('Education')),
+            DropdownMenuItem(value: 'wants', child: Text('Wants')),
+            DropdownMenuItem(value: 'custom', child: Text('Custom')),
+          ],
+          onChanged: onChanged,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDatePicker({
+    required BuildContext context,
+    required DateTime selectedDate,
+    required ValueChanged<DateTime> onDateChanged,
+  }) {
+    return GestureDetector(
+      onTap: () async {
+        final picked = await showDatePicker(
+          context: context,
+          initialDate: selectedDate,
+          firstDate: DateTime(2000),
+          lastDate: DateTime(2100),
+        );
+        if (picked != null) onDateChanged(picked);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              _formattedDate(selectedDate),
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Colors.white,
+              ),
+            ),
+            const Icon(
+              Icons.calendar_month_rounded,
+              size: 18,
+              color: Colors.white,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formattedDate(DateTime d) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${months[d.month - 1]} ${d.day}, ${d.year}';
   }
 }
