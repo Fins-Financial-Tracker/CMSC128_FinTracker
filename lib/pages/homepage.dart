@@ -195,9 +195,11 @@ class _HomePageState extends State<HomePage>
 
   void _openEditExpenseDialog(int index) async {
     final expense = HomePage.expenses[index];
-    final updated = await Navigator.push<Expense>(
-      context,
-      MaterialPageRoute(builder: (_) => EditExpensePage(expense: expense)),
+    final updated = await showDialog<Expense>(
+      context: context,
+      builder: (context) {
+        return EditExpensePage(expense: expense);
+      },
     );
     if (updated != null) {
       _editExpense(index, updated.name, updated.amount, updated.category,
