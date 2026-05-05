@@ -7,7 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'pages/homepage.dart';
 import 'pages/summary.dart';
 import 'pages/customizations.dart';
-import 'pages/expenses/add/add_expense_page.dart'; 
+import 'pages/expenses/add/add_expense_page.dart';
 import 'pages/expense_model.dart';
 import 'pages/landing.dart';
 import 'utils/notification_helper.dart';
@@ -28,23 +28,24 @@ const bool kDebugForceLandingPage = true;
 ===============
   ENTRY POINT
 ===============
-*/ 
+*/
 void main() async {
-// 1. Critical first step
-  WidgetsFlutterBinding.ensureInitialized(); 
+  // 1. Critical first step
+  WidgetsFlutterBinding.ensureInitialized();
 
   // 2. Initialize global timezone database
   tz_data.initializeTimeZones();
 
   String timeZoneName = 'Asia/Manila'; // Default starting point
-  
+
   try {
     // Attempt to get the phone's timezone with a strict timeout
-    final dynamic tzResult = await FlutterTimezone.getLocalTimezone()
-        .timeout(const Duration(seconds: 1));
-    
+    final dynamic tzResult = await FlutterTimezone.getLocalTimezone().timeout(
+      const Duration(seconds: 1),
+    );
+
     timeZoneName = tzResult is String ? tzResult : tzResult.toString();
-    
+
     // Safety check: Ensure the location exists in the database
     tz.setLocalLocation(tz.getLocation(timeZoneName));
   } catch (e) {
@@ -56,13 +57,12 @@ void main() async {
   // 3. Match the name in your NotificationHelper
   // Ensure this is PUBLIC in notification_helper.dart
   // Ensures that engine is ready
-  await NotificationHelper.ensureInitialized(); 
+  await NotificationHelper.ensureInitialized();
 
-  if (!kIsWeb && (
-    defaultTargetPlatform == TargetPlatform.windows ||
-    defaultTargetPlatform == TargetPlatform.linux ||
-    defaultTargetPlatform == TargetPlatform.macOS
-  )) {
+  if (!kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.windows ||
+          defaultTargetPlatform == TargetPlatform.linux ||
+          defaultTargetPlatform == TargetPlatform.macOS)) {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
   }
@@ -88,21 +88,23 @@ class _MyAppState extends State<MyApp> {
     _showLandingFuture = _shouldShowLanding();
   }
 
-/*
+  /*
 ===============
     THEMES 
 ===============
-*/ 
+*/
   @override
   Widget build(BuildContext context) {
     // MyApp wraps MaterialAPp in a ValueListenableBuilder to listen to ThemeController.notifier
     return ValueListenableBuilder<AppThemeType>(
       valueListenable: ThemeController.notifier,
-      builder: (context, themeType, _){
+      builder: (context, themeType, _) {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
           // When notifier.value changes, Flutter rebuilds and theme:getTheme(themeType) updaes app theme
-          theme: getTheme(themeType), // integrate this with your shared preferences for dynamic theme
+          theme: getTheme(
+            themeType,
+          ), // integrate this with your shared preferences for dynamic theme
           home: FutureBuilder<bool>(
             future: _showLandingFuture,
             builder: (context, snapshot) {
@@ -119,7 +121,7 @@ class _MyAppState extends State<MyApp> {
             },
           ),
         );
-      }
+      },
     );
   }
 }
@@ -156,7 +158,7 @@ Future<void> resetFirstRunForTesting() async {
 ===============
   Main Screen
 ===============
-*/ 
+*/
 
 // Stateful because it needs to track which tab is currently selected
 class ExpenseHomePage extends StatefulWidget {
@@ -171,7 +173,7 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
   int _bottomNavIndex = 0;
 
   // The master list is now static inside HomePage, so this list is removed:
-  // final List<Expense> myExpenses = []; 
+  // final List<Expense> myExpenses = [];
 
   final iconList = <IconData>[
     Icons.home,
@@ -194,23 +196,37 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
     // List of all the screens. HomePage must be instantiated with its static key
     // so its state (like the selected date) can be accessed from the FAB.
     final pages = <Widget>[
-      HomePage(key: HomePage.homePageStateKey,
+      HomePage(
+        key: HomePage.homePageStateKey,
         onSummaryTap: () {
           setState(() {
-            _bottomNavIndex = 1; 
+            _bottomNavIndex = 1;
           });
         },
       ),
       const SummaryPage(),
       const CustomizationPage(),
-      const SettingsPage(),  // temp settings instead of profile page for now, sorry guys need ko dnay ibypass
+      const SettingsPage(), // temp settings instead of profile page for now, sorry guys need ko dnay ibypass
     ];
+
+    final body = _bottomNavIndex == 1
+        ? Stack(
+            children: [
+              Positioned.fill(
+                child: Image.asset(
+                  'assets/images/denim/background.png',
+                  fit: BoxFit.cover,
+                ),
+              ),
+              const SummaryPage(),
+            ],
+          )
+        : pages[_bottomNavIndex];
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      // Remove Scaffold bg 
       extendBody: true,
-      body: pages[_bottomNavIndex],
+      body: body,
       // Code for the add button
       floatingActionButton: FloatingActionButton(
         shape: const CircleBorder(), // <--- Makes the button perfectly round
@@ -219,11 +235,15 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
           // Check if we are in Home Page (index 0)
           if (_bottomNavIndex == 0) {
             // Get the currently selected date from the HomePage State via the GlobalKey
-            final selectedDate = HomePage.homePageStateKey.currentState?.getSelectedDate() ?? DateTime.now();
-            
+            final selectedDate =
+                HomePage.homePageStateKey.currentState?.getSelectedDate() ??
+                DateTime.now();
+
             final newExpense = await Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => AddExpensePage(initialDate: selectedDate)),
+              MaterialPageRoute(
+                builder: (_) => AddExpensePage(initialDate: selectedDate),
+              ),
             );
 
             if (newExpense != null && newExpense is Expense) {
@@ -231,9 +251,9 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
               await DBHelper().insertExpense(newExpense);
               setState(() {
                 // Add the new expense to the shared static list
-                HomePage.expenses.add(newExpense); 
+                HomePage.expenses.add(newExpense);
                 // Switch back to the Home tab to see the change
-                _bottomNavIndex = 0; 
+                _bottomNavIndex = 0;
               });
             }
           } else {
@@ -246,7 +266,7 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
         child: Icon(Icons.add, color: context.surface),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      
+
       bottomNavigationBar: LayoutBuilder(
         builder: (BuildContext innerContext, BoxConstraints constraints) {
           return AnimatedBottomNavigationBar(

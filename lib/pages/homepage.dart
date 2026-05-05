@@ -213,12 +213,41 @@ class _HomePageState extends State<HomePage>
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: kNavbarBlue,
+        backgroundColor: Colors.transparent,
+        flexibleSpace: Stack(
+          fit: StackFit.expand,
+          children: [
+            Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.identity()..scale(1.25, 1.0, 1.0),
+              child: Image.asset(
+                'assets/images/denim/jean.png',
+                fit: BoxFit.fitWidth,
+                alignment: Alignment.center,
+              ),
+            ),
+            Container(
+              color: const Color.fromARGB(255, 0, 0, 0).withOpacity(0.35),
+            ),
+          ],
+        ),
         elevation: 0,
         title: Text(
           currentMonthName,
           style: const TextStyle(
-              color: Colors.white, fontWeight: FontWeight.bold),
+            fontFamily: 'Cartoon',
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 24,
+            letterSpacing: -0.5,
+            shadows: [
+              Shadow(
+                offset: Offset(1, 8),
+                blurRadius: 0,
+                color: Color.fromARGB(255, 0, 0, 0),
+              ),
+            ],
+          ),
         ),
         centerTitle: true,
         actions: [

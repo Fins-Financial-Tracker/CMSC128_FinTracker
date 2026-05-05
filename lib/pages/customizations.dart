@@ -137,7 +137,8 @@ class _CustomizationPageState extends State<CustomizationPage> {
     if (enabled && !kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
       final androidImpl = flutterLocalNotificationsPlugin
           .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>();
+            AndroidFlutterLocalNotificationsPlugin
+          >();
       try {
         final allowed = await androidImpl?.areNotificationsEnabled();
         if (allowed == false) {
@@ -168,25 +169,12 @@ class _CustomizationPageState extends State<CustomizationPage> {
             ),
           ),
           Positioned(
-            top: 0,
+            top: -20,
             left: 0,
             right: 0,
             child: Image.asset(
               'assets/images/denim/jean_scrap.png',
               fit: BoxFit.contain,
-            ),
-          ),
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Transform(
-              alignment: Alignment.center,
-              transform: Matrix4.identity()..scale(-1.0, -1.0, 1.0),
-              child: Image.asset(
-                'assets/images/denim/jean_scrap.png',
-                fit: BoxFit.contain,
-              ),
             ),
           ),
           Center(
@@ -222,105 +210,112 @@ class _CustomizationPageState extends State<CustomizationPage> {
                       width: isSmallScreen ? 320 : 480,
                       child: Container(
                         decoration: BoxDecoration(
-                          color: const Color(0xFF70372A),
                           borderRadius: BorderRadius.circular(20),
-                        ),
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          'Shape your account around\nyour habits and goals.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                            height: 1.2,
+                          image: const DecorationImage(
+                            image: AssetImage(
+                              'assets/images/denim/leather.png',
+                            ),
+                            fit: BoxFit.cover,
                           ),
                         ),
-                        const SizedBox(height: 22),
-                        _buildLabel('Set your budget'),
-                        _buildBudgetInputField(),
-                        const SizedBox(height: 16),
-                        _buildLabel('Choose your budget cycle'),
-                        _buildDropdownSelector(
-                          value: _selectedBudgetFrequency,
-                          items: _budgetFrequencies,
-                          onChanged: (v) =>
-                              setState(() => _selectedBudgetFrequency = v!),
-                        ),
-                        const SizedBox(height: 16),
-                        _buildNotificationToggle(),
-                        Visibility(
-                          visible: _notificationsEnabled,
-                          maintainState: true,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Divider(color: Colors.white24, height: 28),
-                              _buildLabel('Set your reminder frequency'),
-                              _buildReminderRow(context),
-                              const SizedBox(height: 4),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        Center(
-                          child: SizedBox(
-                            width: isSmallScreen ? 250 : 250,
-                            height: isSmallScreen ? 80 : 90,
-                            child: MouseRegion(
-                              cursor: SystemMouseCursors.click,
-                              onEnter: (_) {
-                                if (!_isButtonHovered) {
-                                  setState(() => _isButtonHovered = true);
-                                }
-                              },
-                              onExit: (_) {
-                                if (_isButtonHovered) {
-                                  setState(() => _isButtonHovered = false);
-                                }
-                              },
-                              child: AnimatedScale(
-                                scale: _isButtonHovered ? 1.06 : 1.0,
-                                duration: const Duration(milliseconds: 180),
-                                curve: Curves.easeOut,
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: _saveCustomizations,
-                                    borderRadius: BorderRadius.circular(14),
-                                    child: Stack(
-                                      alignment: Alignment.center,
-                                      children: [
-                                        Positioned.fill(
-                                          child: Image.asset(
-                                            'assets/images/denim/button.png',
-                                            fit: BoxFit.fill,
-                                          ),
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              'Shape your account around\nyour habits and goals.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                                height: 1.2,
+                              ),
+                            ),
+                            const SizedBox(height: 22),
+                            _buildLabel('Set your budget'),
+                            _buildBudgetInputField(),
+                            const SizedBox(height: 16),
+                            _buildLabel('Choose your budget cycle'),
+                            _buildDropdownSelector(
+                              value: _selectedBudgetFrequency,
+                              items: _budgetFrequencies,
+                              onChanged: (v) =>
+                                  setState(() => _selectedBudgetFrequency = v!),
+                            ),
+                            const SizedBox(height: 16),
+                            _buildNotificationToggle(),
+                            Visibility(
+                              visible: _notificationsEnabled,
+                              maintainState: true,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Divider(color: Colors.white24, height: 28),
+                                  _buildLabel('Set your reminder frequency'),
+                                  _buildReminderRow(context),
+                                  const SizedBox(height: 4),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            Center(
+                              child: SizedBox(
+                                width: isSmallScreen ? 250 : 250,
+                                height: isSmallScreen ? 80 : 90,
+                                child: MouseRegion(
+                                  cursor: SystemMouseCursors.click,
+                                  onEnter: (_) {
+                                    if (!_isButtonHovered) {
+                                      setState(() => _isButtonHovered = true);
+                                    }
+                                  },
+                                  onExit: (_) {
+                                    if (_isButtonHovered) {
+                                      setState(() => _isButtonHovered = false);
+                                    }
+                                  },
+                                  child: AnimatedScale(
+                                    scale: _isButtonHovered ? 1.06 : 1.0,
+                                    duration: const Duration(milliseconds: 180),
+                                    curve: Curves.easeOut,
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        onTap: _saveCustomizations,
+                                        borderRadius: BorderRadius.circular(14),
+                                        child: Stack(
+                                          alignment: Alignment.center,
+                                          children: [
+                                            Positioned.fill(
+                                              child: Image.asset(
+                                                'assets/images/denim/button.png',
+                                                fit: BoxFit.fill,
+                                              ),
+                                            ),
+                                            Text(
+                                              'Done',
+                                              style: TextStyle(
+                                                fontFamily: 'Cartoon',
+                                                fontSize: isSmallScreen
+                                                    ? 14
+                                                    : 15,
+                                                fontWeight: FontWeight.bold,
+                                                letterSpacing: 0.5,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                        Text(
-                                          'Done',
-                                          style: TextStyle(
-                                            fontFamily: 'Cartoon',
-                                            fontSize: isSmallScreen ? 14 : 15,
-                                            fontWeight: FontWeight.bold,
-                                            letterSpacing: 0.5,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      ],
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
+                      ),
                     ),
                   ),
                 ],
@@ -358,7 +353,10 @@ class _CustomizationPageState extends State<CustomizationPage> {
             ? _formatCurrency(_savedBudget!)
             : 'Enter your budget here...',
         hintStyle: TextStyle(color: Colors.white70, fontSize: 14),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 15,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide.none,
@@ -397,6 +395,7 @@ class _CustomizationPageState extends State<CustomizationPage> {
             fontWeight: FontWeight.w500,
           ),
           dropdownColor: const Color(0xFF70372A),
+          borderRadius: BorderRadius.circular(14),
           items: items.map((item) {
             return DropdownMenuItem<String>(value: item, child: Text(item));
           }).toList(),
@@ -464,11 +463,7 @@ class _CustomizationPageState extends State<CustomizationPage> {
                   ),
                 ),
                 const SizedBox(width: 6),
-                Icon(
-                  Icons.access_time_rounded,
-                  size: 16,
-                  color: Colors.white,
-                ),
+                Icon(Icons.access_time_rounded, size: 16, color: Colors.white),
               ],
             ),
           ),

@@ -22,8 +22,9 @@ class _SummaryPageState extends State<SummaryPage> {
     super.initState();
     final now = DateTime.now();
     final currentDate = DateTime(now.year, now.month, now.day);
-    _selectedWeek =
-        currentDate.subtract(Duration(days: currentDate.weekday - 1));
+    _selectedWeek = currentDate.subtract(
+      Duration(days: currentDate.weekday - 1),
+    );
     loadExpensesFromDB();
   }
 
@@ -42,8 +43,9 @@ class _SummaryPageState extends State<SummaryPage> {
     final now = DateTime.now();
     final currentDate = DateTime(now.year, now.month, now.day);
 
-    final currentStartOfWeek =
-        currentDate.subtract(Duration(days: currentDate.weekday - 1));
+    final currentStartOfWeek = currentDate.subtract(
+      Duration(days: currentDate.weekday - 1),
+    );
 
     final List<DateTime> weeks = [];
     DateTime weekStart = currentStartOfWeek;
@@ -66,8 +68,18 @@ class _SummaryPageState extends State<SummaryPage> {
 
   String _formatFullDate(DateTime date) {
     const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
 
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
@@ -80,10 +92,10 @@ class _SummaryPageState extends State<SummaryPage> {
       _selectedWeek.day,
     );
 
-    final endOfWeek = startOfWeek
-        .add(const Duration(days: 6, hours: 23, minutes: 59, seconds: 59));
+    final endOfWeek = startOfWeek.add(
+      const Duration(days: 6, hours: 23, minutes: 59, seconds: 59),
+    );
 
-  
     if (_expenses.isEmpty) {
       return {
         'total': 0.0,
@@ -102,8 +114,10 @@ class _SummaryPageState extends State<SummaryPage> {
               expenseDate.isAtSameMomentAs(endOfWeek));
     }).toList();
 
-    final double total =
-        weeklyExpensesList.fold(0.0, (sum, e) => sum + e.amount);
+    final double total = weeklyExpensesList.fold(
+      0.0,
+      (sum, e) => sum + e.amount,
+    );
 
     final Map<String, double> categoryTotals = {};
     for (final expense in weeklyExpensesList) {
@@ -114,8 +128,9 @@ class _SummaryPageState extends State<SummaryPage> {
       );
     }
 
-    final List<Map<String, dynamic>> categoryData =
-        categoryTotals.entries.map((entry) {
+    final List<Map<String, dynamic>> categoryData = categoryTotals.entries.map((
+      entry,
+    ) {
       return {
         'name': entry.key,
         'amount': entry.value,
@@ -126,12 +141,13 @@ class _SummaryPageState extends State<SummaryPage> {
     final List<Map<String, dynamic>> chartData = categoryTotals.entries
         .where((entry) => entry.value > 0)
         .map((entry) {
-      return {
-        'name': entry.key,
-        'amount': entry.value,
-        'color': _getColorForCategory(entry.key),
-      };
-    }).toList();
+          return {
+            'name': entry.key,
+            'amount': entry.value,
+            'color': _getColorForCategory(entry.key),
+          };
+        })
+        .toList();
 
     return {
       'total': total,
@@ -211,8 +227,9 @@ class _SummaryPageState extends State<SummaryPage> {
       _selectedWeek.day,
     );
 
-    final endOfWeek = startOfWeek
-        .add(const Duration(days: 6, hours: 23, minutes: 59, seconds: 59));
+    final endOfWeek = startOfWeek.add(
+      const Duration(days: 6, hours: 23, minutes: 59, seconds: 59),
+    );
 
     return _expenses.where((e) {
       final expenseDate = DateTime(e.date.year, e.date.month, e.date.day);
@@ -231,8 +248,9 @@ class _SummaryPageState extends State<SummaryPage> {
     required IconData icon,
     required int transactions,
   }) {
-    final displayTitle =
-        title.isNotEmpty ? title[0].toUpperCase() + title.substring(1) : title;
+    final displayTitle = title.isNotEmpty
+        ? title[0].toUpperCase() + title.substring(1)
+        : title;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -246,9 +264,7 @@ class _SummaryPageState extends State<SummaryPage> {
           Container(
             width: 48,
             height: 48,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-            ),
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(14)),
             child: Icon(icon, color: color, size: 24),
           ),
           const SizedBox(width: 12),
@@ -267,10 +283,7 @@ class _SummaryPageState extends State<SummaryPage> {
                 const SizedBox(height: 3),
                 Text(
                   '$transactions transaction${transactions == 1 ? '' : 's'}',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
                 ),
               ],
             ),
@@ -291,155 +304,214 @@ class _SummaryPageState extends State<SummaryPage> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     final summary = calculateWeeklySummary();
     final double weeklyExpenses = summary['total'] as double;
     final List<Map<String, dynamic>> categoryData =
         List<Map<String, dynamic>>.from(
-      (summary['categories'] ?? const []) as List,
-    );
+          (summary['categories'] ?? const []) as List,
+        );
     final List<Map<String, dynamic>> chartData =
         List<Map<String, dynamic>>.from(
-      (summary['chartCategories'] ?? const []) as List,
-    );
+          (summary['chartCategories'] ?? const []) as List,
+        );
 
     final pieChartSections = _getPieChartSections(chartData);
     final isDataEmpty = chartData.isEmpty;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F4EE),
+      backgroundColor: Colors.transparent,
+      extendBody: true,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF2F4EE),
+        backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
         automaticallyImplyLeading: false,
-        title: const Text(
-          'Weekly Expense',
-          style: TextStyle(
-            color: Colors.black87,
-            fontWeight: FontWeight.w700,
-            fontSize: 22,
-          ),
-        ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(28),
-              ),
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/denim/background.png',
+              fit: BoxFit.cover,
+            ),
+          ),
+          Positioned(
+            top: -20,
+            left: 0,
+            right: 0,
+            child: Image.asset(
+              'assets/images/denim/jean_scrap.png',
+              fit: BoxFit.contain,
+            ),
+          ),
+          Positioned.fill(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 100, 16, 20),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    '₱${weeklyExpenses.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      fontSize: 38,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF1E2723),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Spent this week',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                  const SizedBox(height: 22),
                   Center(
-                    child: SizedBox(
-                      height: 210,
-                      width: 210,
-                      child: PieChart(
-                        PieChartData(
-                          sections: pieChartSections,
-                          centerSpaceRadius: 52,
-                          sectionsSpace: 0,
-                          borderData: FlBorderData(show: false),
+                    child: Text(
+                      'Summary of Expenses',
+                      textAlign: TextAlign.left,
+                      style: TextStyle(
+                        fontFamily: 'Cartoon',
+                        fontSize: 25,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        letterSpacing: -0.5,
+                        shadows: const [
+                          Shadow(
+                            offset: Offset(1, 8),
+                            blurRadius: 0,
+                            color: Color.fromARGB(255, 0, 0, 0),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(28),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          '₱${weeklyExpenses.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontSize: 38,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            shadows: [
+                              Shadow(
+                                offset: Offset(1, 3),
+                                blurRadius: 0,
+                                color: Color.fromARGB(255, 0, 0, 0),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Spent this week',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white.withOpacity(0.92),
+                          ),
+                        ),
+                        const SizedBox(height: 22),
+                        Center(
+                          child: SizedBox(
+                            height: 210,
+                            width: 210,
+                            child: PieChart(
+                              PieChartData(
+                                sections: pieChartSections,
+                                centerSpaceRadius: 52,
+                                sectionsSpace: 0,
+                                borderData: FlBorderData(show: false),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(14),
+                            image: const DecorationImage(
+                              image: AssetImage(
+                                'assets/images/denim/leather.png',
+                              ),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          child: DropdownButton<DateTime>(
+                            isExpanded: true,
+                            dropdownColor: const Color(0xFF70372A),
+                            borderRadius: BorderRadius.circular(14),
+                            value: _availableWeeks.contains(_selectedWeek)
+                                ? _selectedWeek
+                                : (_availableWeeks.isNotEmpty
+                                      ? _availableWeeks.first
+                                      : _selectedWeek),
+                            underline: const SizedBox(),
+                            icon: const Icon(
+                              Icons.keyboard_arrow_down,
+                              color: Colors.white,
+                            ),
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                            items: _availableWeeks.map((weekStart) {
+                              final endOfWeek = weekStart.add(
+                                const Duration(days: 6),
+                              );
+                              return DropdownMenuItem<DateTime>(
+                                value: weekStart,
+                                child: Text(
+                                  '${_formatFullDate(weekStart)} - ${_formatFullDate(endOfWeek)}',
+                                  style: const TextStyle(color: Colors.white),
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (DateTime? newWeek) {
+                              if (newWeek != null) {
+                                setState(() {
+                                  _selectedWeek = newWeek;
+                                });
+                              }
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  ...categoryData.map(
+                    (data) => _expenseTile(
+                      color: data['color'] as Color,
+                      title: data['name'] as String,
+                      amount: data['amount'] as double,
+                      icon: _getIconForCategory(data['name'] as String),
+                      transactions: _transactionCountForCategory(
+                        data['name'] as String,
+                      ),
+                    ),
+                  ),
+                  if (isDataEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: Center(
+                        child: Text(
+                          'No expenses recorded for this week.',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.85),
+                            fontStyle: FontStyle.italic,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF2F4F5),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFFE3E5E8)),
-                    ),
-                    child: DropdownButton<DateTime>(
-                      isExpanded: true,
-                      value: _availableWeeks.contains(_selectedWeek)
-                          ? _selectedWeek
-                          : (_availableWeeks.isNotEmpty ? _availableWeeks.first : _selectedWeek),
-                      underline: const SizedBox(),
-                      icon: const Icon(Icons.keyboard_arrow_down, color: Colors.black87),
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                      ),
-                      items: _availableWeeks.map((weekStart) {
-                        final endOfWeek = weekStart.add(const Duration(days: 6));
-                        return DropdownMenuItem<DateTime>(
-                          value: weekStart,
-                          child: Text(
-                            '${_formatFullDate(weekStart)} - ${_formatFullDate(endOfWeek)}',
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (DateTime? newWeek) {
-                        if (newWeek != null) {
-                          setState(() {
-                            _selectedWeek = newWeek;
-                          });
-                        }
-                      },
-                    ),
-                  ),
                 ],
               ),
             ),
-            const SizedBox(height: 18),
-            ...categoryData.map(
-              (data) => _expenseTile(
-                color: data['color'] as Color,
-                title: data['name'] as String,
-                amount: data['amount'] as double,
-                icon: _getIconForCategory(data['name'] as String),
-                transactions:
-                    _transactionCountForCategory(data['name'] as String),
-              ),
-            ),
-            if (isDataEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 16),
-                child: Center(
-                  child: Text(
-                    'No expenses recorded for this week.',
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

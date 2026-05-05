@@ -53,6 +53,7 @@ class AppThemes {
   }) {
     return ThemeData(
       useMaterial3: true,
+      fontFamily: 'Nunito',
       scaffoldBackgroundColor: background,
       colorScheme: ColorScheme.fromSeed(
         seedColor: primary, // main app theme, just the same with primary
