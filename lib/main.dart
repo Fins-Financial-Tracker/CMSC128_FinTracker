@@ -195,9 +195,10 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
             // Get the currently selected date from the HomePage State via the GlobalKey
             final selectedDate = HomePage.homePageStateKey.currentState?.getSelectedDate() ?? DateTime.now();
             
-            final newExpense = await Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => AddExpensePage(initialDate: selectedDate)),
+            final newExpense = await showDialog<Expense>(
+              context: context,
+              barrierDismissible: false,
+              builder: (_) => AddExpensePage(initialDate: selectedDate),
             );
 
             if (newExpense != null && newExpense is Expense) {

@@ -104,7 +104,12 @@ class _CustomizationPageState extends State<CustomizationPage> {
     final prefs = await SharedPreferences.getInstance();
 
     final b = prefs.getDouble('budgetAmount');
-    if (b != null) setState(() => _savedBudget = b);
+    if (b != null) {
+      setState(() {
+        _savedBudget = b;
+        _budgetController.text = b.toStringAsFixed(2);
+      });
+    }
 
     final cycle = prefs.getString('budgetCycle');
     if (cycle != null && _budgetFrequencies.contains(cycle)) {
