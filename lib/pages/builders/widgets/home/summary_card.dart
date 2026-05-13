@@ -34,7 +34,7 @@ class SummaryCard extends StatelessWidget {
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
-                color: Colors.grey[700],
+                color: title == 'Left to Spend'? Colors.black : Colors.grey[700],
               ),
             ),
           ],
