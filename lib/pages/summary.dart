@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../database/db_helper.dart';
 import 'expense_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../analytics/financial_insight_service.dart';
+import '../analytics/widgets/analytics_bottom_sheet.dart';
 
 enum SummaryMode { weekly, monthly }
 enum ChartMode { pie, bar }
@@ -26,6 +28,10 @@ class _SummaryPageState extends State<SummaryPage> {
   List<Expense> _expenses = [];
   bool _isLoading = true;
 
+  // ── AI analysis state ──────────────────────────────────────────────────────
+  bool _isAnalyzing = false;
+  final _service = FinancialInsightService();
+
   late DateTime _selectedWeek;
   late DateTime _selectedMonth;
 
@@ -37,6 +43,22 @@ class _SummaryPageState extends State<SummaryPage> {
 
   double _periodBudget = 0.0;
   String _budgetCycle = 'Weekly';
+
+  /// Runs detectBudgetRisk (health score + overspend alerts) and shows the
+  /// shared AnalyticsBottomSheet — same pattern as ProfilePage.
+  Future<void> _analyzeMyStanding() async {
+    if (_isAnalyzing) return;
+    setState(() => _isAnalyzing = true);
+
+    // Brief delay so the loader is visible before the synchronous compute.
+    await Future.delayed(const Duration(milliseconds: 300));
+
+    final result = _service.detectBudgetRisk(_expenses);
+
+    if (!mounted) return;
+    setState(() => _isAnalyzing = false);
+    await AnalyticsBottomSheet.show(context, result);
+  }
 
   Future<void> _loadBudgetFromPrefs() async {
     final prefs = await SharedPreferences.getInstance();
@@ -150,7 +172,8 @@ class _SummaryPageState extends State<SummaryPage> {
     _availableWeeks = weeks.reversed.toList();
 
     final currentMonthStart = DateTime(now.year, now.month, 1);
-    final earliestMonthStart = DateTime(earliestDate.year, earliestDate.month, 1);
+    final earliestMonthStart =
+        DateTime(earliestDate.year, earliestDate.month, 1);
     final defaultEarliestMonth =
         DateTime(currentMonthStart.year, currentMonthStart.month - 11, 1);
 
@@ -176,53 +199,28 @@ class _SummaryPageState extends State<SummaryPage> {
 
   String _formatFullDate(DateTime date) {
     const months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December'
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December',
     ];
-
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 
   String _formatMonthYear(DateTime date) {
     const months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December'
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December',
     ];
-
     return '${months[date.month - 1]} ${date.year}';
   }
 
   DateTime _getCurrentPeriodStart() {
-    return _summaryMode == SummaryMode.weekly
-        ? _selectedWeek
-        : _selectedMonth;
+    return _summaryMode == SummaryMode.weekly ? _selectedWeek : _selectedMonth;
   }
 
   DateTime _getCurrentPeriodEnd() {
     if (_summaryMode == SummaryMode.weekly) {
       return _getEndOfWeek(_selectedWeek);
     }
-
     return _getEndOfMonth(_selectedMonth);
   }
 
@@ -230,27 +228,22 @@ class _SummaryPageState extends State<SummaryPage> {
     if (_summaryMode == SummaryMode.weekly) {
       return _selectedWeek.subtract(const Duration(days: 7));
     }
-
     return DateTime(_selectedMonth.year, _selectedMonth.month - 1, 1);
   }
 
   DateTime _getPreviousPeriodEnd() {
     final previousStart = _getPreviousPeriodStart();
-
     if (_summaryMode == SummaryMode.weekly) {
       return _getEndOfWeek(previousStart);
     }
-
     return _getEndOfMonth(previousStart);
   }
 
   List<Expense> _expensesInRange(DateTime start, DateTime end) {
     final cleanStart = _cleanDate(start);
     final cleanEnd = _cleanDate(end);
-
     return _expenses.where((expense) {
       final expenseDate = _cleanDate(expense.date);
-
       return !expenseDate.isBefore(cleanStart) &&
           !expenseDate.isAfter(cleanEnd);
     }).toList();
@@ -269,14 +262,11 @@ class _SummaryPageState extends State<SummaryPage> {
     final previousEnd = _getPreviousPeriodEnd();
 
     final periodExpenses = _expensesInRange(start, end);
-
     final total =
         periodExpenses.fold(0.0, (sum, expense) => sum + expense.amount);
-
     final previousTotal = _totalForRange(previousStart, previousEnd);
 
     final Map<String, double> categoryTotals = {};
-
     for (final expense in periodExpenses) {
       categoryTotals.update(
         expense.category,
@@ -406,10 +396,7 @@ class _SummaryPageState extends State<SummaryPage> {
             label: 'Weekly',
             selected: _summaryMode == SummaryMode.weekly,
             onTap: () async {
-              setState(() {
-                _summaryMode = SummaryMode.weekly;
-              });
-
+              setState(() => _summaryMode = SummaryMode.weekly);
               await _loadBudgetFromPrefs();
             },
           ),
@@ -417,9 +404,7 @@ class _SummaryPageState extends State<SummaryPage> {
             label: 'Monthly',
             selected: _summaryMode == SummaryMode.monthly,
             onTap: () async {
-              setState(() {
-                _summaryMode = SummaryMode.monthly;
-              });
+              setState(() => _summaryMode = SummaryMode.monthly);
               await _loadBudgetFromPrefs();
             },
           ),
@@ -473,21 +458,13 @@ class _SummaryPageState extends State<SummaryPage> {
               label: 'Pie',
               icon: Icons.donut_large_rounded,
               selected: _chartMode == ChartMode.pie,
-              onTap: () {
-                setState(() {
-                  _chartMode = ChartMode.pie;
-                });
-              },
+              onTap: () => setState(() => _chartMode = ChartMode.pie),
             ),
             _buildChartButton(
               label: 'Bar',
               icon: Icons.bar_chart_rounded,
               selected: _chartMode == ChartMode.bar,
-              onTap: () {
-                setState(() {
-                  _chartMode = ChartMode.bar;
-                });
-              },
+              onTap: () => setState(() => _chartMode = ChartMode.bar),
             ),
           ],
         ),
@@ -514,7 +491,9 @@ class _SummaryPageState extends State<SummaryPage> {
           child: Icon(
             icon,
             size: 20,
-            color: selected ? Colors.white : summaryNavy.withValues(alpha: 0.55),
+            color: selected
+                ? Colors.white
+                : summaryNavy.withValues(alpha: 0.55),
           ),
         ),
       ),
@@ -576,160 +555,149 @@ class _SummaryPageState extends State<SummaryPage> {
   }
 
   Widget _buildBarChart(DateTime start, DateTime end) {
-  final days = <DateTime>[];
-  DateTime cursor = DateTime(start.year, start.month, start.day);
+    final days = <DateTime>[];
+    DateTime cursor = DateTime(start.year, start.month, start.day);
 
-  while (!cursor.isAfter(DateTime(end.year, end.month, end.day))) {
-    days.add(cursor);
-    cursor = cursor.add(const Duration(days: 1));
-  }
+    while (!cursor.isAfter(DateTime(end.year, end.month, end.day))) {
+      days.add(cursor);
+      cursor = cursor.add(const Duration(days: 1));
+    }
 
-  final dailyTotals = days.map((day) {
-    final dayExpenses = _expenses.where((expense) {
-      final expenseDate = _cleanDate(expense.date);
-      return _isSameDate(expenseDate, day);
+    final dailyTotals = days.map((day) {
+      final dayExpenses = _expenses.where((expense) {
+        final expenseDate = _cleanDate(expense.date);
+        return _isSameDate(expenseDate, day);
+      });
+      return dayExpenses.fold(0.0, (sum, expense) => sum + expense.amount);
+    }).toList();
+
+    final maxDailyTotal = dailyTotals.isEmpty
+        ? 0.0
+        : dailyTotals.reduce((a, b) => a > b ? a : b);
+
+    final baseMaxY =
+        _periodBudget > maxDailyTotal ? _periodBudget : maxDailyTotal;
+    final chartMaxY = baseMaxY == 0 ? 100.0 : baseMaxY;
+
+    final barGroups = List.generate(days.length, (index) {
+      return BarChartGroupData(
+        x: index,
+        barRods: [
+          BarChartRodData(
+            toY: dailyTotals[index],
+            width: _summaryMode == SummaryMode.weekly ? 18 : 5,
+            color: summaryNavy,
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ],
+      );
     });
 
-    return dayExpenses.fold(0.0, (sum, expense) => sum + expense.amount);
-  }).toList();
-
-  final dailyBudget = _periodBudget > 0 ? _periodBudget / days.length : 0.0;
-
-  final maxDailyTotal = dailyTotals.isEmpty
-      ? 0.0
-      : dailyTotals.reduce((a, b) => a > b ? a : b);
-
-  final baseMaxY = _periodBudget > maxDailyTotal ? _periodBudget : maxDailyTotal;
-
-  final chartMaxY = baseMaxY == 0 ? 100.0 : baseMaxY;
-
-  final barGroups = List.generate(days.length, (index) {
-    return BarChartGroupData(
-      x: index,
-      barRods: [
-        BarChartRodData(
-          toY: dailyTotals[index],
-          width: _summaryMode == SummaryMode.weekly ? 18 : 5,
-          color: summaryNavy,
-          borderRadius: BorderRadius.circular(8),
-        ),
-      ],
-    );
-  });
-
-  return SizedBox(
-    height: 300,
-    child: LayoutBuilder(
-      builder: (context, constraints) {
-        return BarChart(
-          BarChartData(
-            maxY: chartMaxY,
-            barGroups: barGroups,
-            alignment: BarChartAlignment.spaceAround,
-
-             extraLinesData: ExtraLinesData(
-             horizontalLines: [
-              if (_periodBudget > 0)
-                HorizontalLine(
-                  y: _periodBudget,
-                  color: summaryNavy.withValues(alpha: 0.35),
-                  strokeWidth: 1,
-                  dashArray: [6, 4],
+    return SizedBox(
+      height: 300,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return BarChart(
+            BarChartData(
+              maxY: chartMaxY,
+              barGroups: barGroups,
+              alignment: BarChartAlignment.spaceAround,
+              extraLinesData: ExtraLinesData(
+                horizontalLines: [
+                  if (_periodBudget > 0)
+                    HorizontalLine(
+                      y: _periodBudget,
+                      color: summaryNavy.withValues(alpha: 0.35),
+                      strokeWidth: 1,
+                      dashArray: [6, 4],
+                    ),
+                ],
+              ),
+              gridData: FlGridData(
+                show: true,
+                drawVerticalLine: false,
+                horizontalInterval: chartMaxY / 4,
+                getDrawingHorizontalLine: (value) =>
+                    FlLine(color: summaryBorder, strokeWidth: 1),
+              ),
+              borderData: FlBorderData(show: false),
+              titlesData: FlTitlesData(
+                topTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
                 ),
-              ],
-            ),
-            gridData: FlGridData(
-              show: true,
-              drawVerticalLine: false,
-              horizontalInterval: chartMaxY / 4,
-              getDrawingHorizontalLine: (value) {
-                return FlLine(
-                  color: summaryBorder,
-                  strokeWidth: 1,
-                );
-              },
-            ),
-            borderData: FlBorderData(show: false),
-            titlesData: FlTitlesData(
-              topTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: false),
-              ),
-              rightTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: false),
-              ),
-              leftTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  reservedSize: 36,
-                  interval: chartMaxY / 4,
-                  getTitlesWidget: (value, meta) {
-                    return Text(
-                      value >= 1000
-                          ? '${(value / 1000).toStringAsFixed(1)}k'
-                          : value.toStringAsFixed(0),
-                      style: TextStyle(
-                        fontSize: 9,
-                        color: summaryMutedText,
-                      ),
-                    );
-                  },
+                rightTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
                 ),
-              ),
-              bottomTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  reservedSize: 30,
-                  getTitlesWidget: (value, meta) {
-                    final index = value.toInt();
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 36,
+                    interval: chartMaxY / 4,
+                    getTitlesWidget: (value, meta) {
+                      return Text(
+                        value >= 1000
+                            ? '${(value / 1000).toStringAsFixed(1)}k'
+                            : value.toStringAsFixed(0),
+                        style: const TextStyle(
+                          fontSize: 9,
+                          color: summaryMutedText,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 30,
+                    getTitlesWidget: (value, meta) {
+                      final index = value.toInt();
+                      if (index < 0 || index >= days.length) {
+                        return const SizedBox.shrink();
+                      }
 
-                    if (index < 0 || index >= days.length) {
-                      return const SizedBox.shrink();
-                    }
+                      if (_summaryMode == SummaryMode.weekly) {
+                        const labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text(
+                            labels[index],
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: summaryMutedText,
+                            ),
+                          ),
+                        );
+                      }
 
-                    if (_summaryMode == SummaryMode.weekly) {
-                      const labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+                      final day = days[index].day;
+                      final lastDay = days.last.day;
+                      if (day != 1 && day % 5 != 0 && day != lastDay) {
+                        return const SizedBox.shrink();
+                      }
 
                       return Padding(
                         padding: const EdgeInsets.only(top: 8),
                         child: Text(
-                          labels[index],
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
+                          '$day',
+                          style: const TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w600,
                             color: summaryMutedText,
                           ),
                         ),
                       );
-                    }
-
-                    final day = days[index].day;
-                    final lastDay = days.last.day;
-
-                    if (day != 1 && day % 5 != 0 && day != lastDay) {
-                      return const SizedBox.shrink();
-                    }
-
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Text(
-                        '$day',
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w600,
-                          color: summaryMutedText,
-                        ),
-                      ),
-                    );
-                  },
+                    },
+                  ),
                 ),
               ),
             ),
-          ),
-        );
-      },
-    ),
-  );
-}
+          );
+        },
+      ),
+    );
+  }
 
   Widget _buildComparisonChip(double currentTotal, double previousTotal) {
     final previousPeriod =
@@ -796,9 +764,7 @@ class _SummaryPageState extends State<SummaryPage> {
     List<Map<String, dynamic>> categoryData,
     double total,
   ) {
-    if (categoryData.isEmpty) {
-      return const SizedBox();
-    }
+    if (categoryData.isEmpty) return const SizedBox();
 
     return Container(
       width: double.infinity,
@@ -871,6 +837,75 @@ class _SummaryPageState extends State<SummaryPage> {
       ),
     );
   }
+  /// Sits at the bottom of the chart card, visually separated by a thin
+  /// divider so it feels like a natural extension rather than a separate
+  /// section.
+  Widget _buildAnalyzeStandingButton() {
+    return GestureDetector(
+      onTap: _expenses.isEmpty ? null : _analyzeMyStanding,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: _isAnalyzing
+              ? summaryNavy.withValues(alpha: 0.08)
+              : summaryNavy.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: summaryNavy.withValues(alpha: 0.15),
+            width: 1,
+          ),
+        ),
+        child: _isAnalyzing
+            ? Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 15,
+                    height: 15,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: summaryNavy.withValues(alpha: 0.7),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Analyzing…',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: summaryNavy.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ],
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.insights_rounded,
+                    size: 17,
+                    color: _expenses.isEmpty
+                        ? summaryNavy.withValues(alpha: 0.3)
+                        : summaryNavy.withValues(alpha: 0.75),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Analyze My Spending',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: _expenses.isEmpty
+                          ? summaryNavy.withValues(alpha: 0.3)
+                          : summaryNavy.withValues(alpha: 0.85),
+                    ),
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
 
   Widget _buildPeriodDropdown() {
     final periods = _summaryMode == SummaryMode.weekly
@@ -896,10 +931,7 @@ class _SummaryPageState extends State<SummaryPage> {
         isExpanded: true,
         value: safeValue,
         underline: const SizedBox(),
-        icon: const Icon(
-          Icons.keyboard_arrow_down,
-          color: summaryNavy,
-        ),
+        icon: const Icon(Icons.keyboard_arrow_down, color: summaryNavy),
         style: const TextStyle(
           fontSize: 15,
           fontWeight: FontWeight.w600,
@@ -907,7 +939,6 @@ class _SummaryPageState extends State<SummaryPage> {
         ),
         items: periods.map((periodStart) {
           String label;
-
           if (_summaryMode == SummaryMode.weekly) {
             final endOfWeek = _getEndOfWeek(periodStart);
             label =
@@ -915,7 +946,6 @@ class _SummaryPageState extends State<SummaryPage> {
           } else {
             label = _formatMonthYear(periodStart);
           }
-
           return DropdownMenuItem<DateTime>(
             value: periodStart,
             child: Text(label),
@@ -923,7 +953,6 @@ class _SummaryPageState extends State<SummaryPage> {
         }).toList(),
         onChanged: (DateTime? newPeriod) {
           if (newPeriod == null) return;
-
           setState(() {
             if (_summaryMode == SummaryMode.weekly) {
               _selectedWeek = newPeriod;
@@ -978,7 +1007,7 @@ class _SummaryPageState extends State<SummaryPage> {
                 const SizedBox(height: 3),
                 Text(
                   '$transactions transaction${transactions == 1 ? '' : 's'}',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 13,
                     color: summaryMutedText,
                   ),
@@ -1011,7 +1040,6 @@ class _SummaryPageState extends State<SummaryPage> {
 
     final double totalExpenses = summary['total'] as double;
     final double previousTotal = summary['previousTotal'] as double;
-
     final DateTime start = summary['start'] as DateTime;
     final DateTime end = summary['end'] as DateTime;
 
@@ -1054,6 +1082,7 @@ class _SummaryPageState extends State<SummaryPage> {
             _buildSummaryModeToggle(),
             const SizedBox(height: 16),
 
+            // ── Main chart card ──────────────────────────────────────────────
             Container(
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
@@ -1078,12 +1107,19 @@ class _SummaryPageState extends State<SummaryPage> {
                   _buildLegend(categoryData, totalExpenses),
                   const SizedBox(height: 18),
                   _buildPeriodDropdown(),
+                  const SizedBox(height: 12),
+                  Divider(
+                    color: summaryNavy.withValues(alpha: 0.10),
+                    thickness: 1,
+                    height: 1,
+                  ),
+                  const SizedBox(height: 14),
+                  _buildAnalyzeStandingButton(),
                 ],
               ),
             ),
 
             const SizedBox(height: 22),
-
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -1107,7 +1143,6 @@ class _SummaryPageState extends State<SummaryPage> {
                 ),
               ],
             ),
-
             const SizedBox(height: 12),
 
             ...categoryData.map(
