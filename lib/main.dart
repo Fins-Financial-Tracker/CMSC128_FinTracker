@@ -145,9 +145,9 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
 
   final iconList = <IconData>[
     Icons.home,
-    Icons.bar_chart,
-    Icons.wallet,       // budget & customizations
-    Icons.person,       // future AI page
+    Icons.settings,     // budget & customizations (Changed to settings)
+    Icons.bar_chart,    // Summary
+    Icons.lightbulb,    // financial insight
   ];
 
   @override
@@ -172,13 +172,13 @@ class _ExpenseHomePageState extends State<ExpenseHomePage> {
       HomePage(key: HomePage.homePageStateKey,
         onSummaryTap: () {
           setState(() {
-            _bottomNavIndex = 1; 
+            _bottomNavIndex = 2; // Updated to match new Summary index
           });
         },
       ),
+      const CustomizationPage(),  // budget & expense settings (Now Settings tab)
       const SummaryPage(),
-      const CustomizationPage(),  // budget & expense settings (wallet icon)
-      const ProfilePage(),       // placeholder — will become AI page
+      const ProfilePage(),       // placeholder — will become AI page (Financial Insight)
     ];
 
     return Scaffold(
