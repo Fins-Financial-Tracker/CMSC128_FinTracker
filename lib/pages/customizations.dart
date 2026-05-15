@@ -193,10 +193,10 @@ class _CustomizationPageState extends State<CustomizationPage> {
                           color: context.onPrimary.withOpacity(0.1),
                           shape: BoxShape.circle,
                         ),
-                      child: IconButton(
+                        child: IconButton(
                           icon: const Icon(Icons.palette_outlined, color: Colors.black),
                           onPressed: () async {
-                            await Navigator.push(
+                            await Navigator.push( 
                               context,
                               MaterialPageRoute(
                                 // fullscreenDialog prevents the hero transition that causes
