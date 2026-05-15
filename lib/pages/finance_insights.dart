@@ -206,7 +206,7 @@ class _HeaderCard extends StatelessWidget {
   Color _scoreColor() {
     if (score >= 70) return const Color(0xFF4CAF50);
     if (score >= 45) return const Color(0xFFFF9800);
-    return const Color.fromARGB(255, 255, 152, 150);
+    return const Color(0xFFEF9A9A);
   }
 
   String _scoreLabel() {
@@ -224,7 +224,7 @@ class _HeaderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final now = DateTime.now();
     final double total = stats['total'] as double;
-    final int count    = stats['count'] as int;
+    final int count = stats['count'] as int;
     final String topCat = stats['topCat'] as String;
 
     return Container(
@@ -250,65 +250,191 @@ class _HeaderCard extends StatelessWidget {
                 ),
               ),
               if (score > 0)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: _scoreColor().withOpacity(0.18),
-                    borderRadius: BorderRadius.circular(20),
-                    border:
-                        Border.all(color: _scoreColor().withOpacity(0.5)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.favorite_rounded,
-                          color: _scoreColor(), size: 12),
-                      const SizedBox(width: 5),
-                      Text(
-                        _scoreLabel(),
-                        style: TextStyle(
-                          color: _scoreColor(),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                _HealthBadge(label: _scoreLabel(), color: _scoreColor()),
             ],
           ),
           const SizedBox(height: 10),
-          // Total spend
-          Text(
-            '₱${total.toStringAsFixed(2)}',
-            style: const TextStyle(
-              fontSize: 36,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-              letterSpacing: -0.5,
+
+          // Main row: spend info + score ring
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              // Left: spend amount + chips
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '₱${total.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        fontSize: 34,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    const Text(
+                      'Spent this month',
+                      style: TextStyle(fontSize: 13, color: Colors.white54),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        _StatChip(
+                          icon: Icons.receipt_long_rounded,
+                          label: '$count transactions',
+                        ),
+                        const SizedBox(width: 8),
+                        if (topCat != '—')
+                          _StatChip(
+                            icon: Icons.trending_up_rounded,
+                            label:
+                                'Top: ${topCat[0].toUpperCase()}${topCat.substring(1)}',
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              // Right: score ring
+              if (score > 0) ...[
+                const SizedBox(width: 16),
+                _ScoreRing(score: score, color: _scoreColor()),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+class _ScoreRing extends StatelessWidget {
+  final double score;
+  final Color color;
+
+  const _ScoreRing({required this.score, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: 76,
+          height: 76,
+          child: CustomPaint(
+            painter: _RingPainter(score: score, color: color),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    score.toStringAsFixed(0),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                      height: 1,
+                    ),
+                  ),
+                  const Text(
+                    '/ 100',
+                    style: TextStyle(
+                      fontSize: 9,
+                      color: Colors.white38,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 2),
-          const Text(
-            'Spent this month',
-            style: TextStyle(fontSize: 13, color: Colors.white54),
+        ),
+        const SizedBox(height: 5),
+        const Text(
+          'Health score',
+          style: TextStyle(
+            fontSize: 11,
+            color: Colors.white38,
+            fontWeight: FontWeight.w500,
           ),
-          const SizedBox(height: 16),
-          // Stats row
-          Row(
-            children: [
-              _StatChip(
-                icon: Icons.receipt_long_rounded,
-                label: '$count transactions',
-              ),
-              const SizedBox(width: 10),
-              if (topCat != '—')
-                _StatChip(
-                  icon: Icons.trending_up_rounded,
-                  label: 'Top: ${topCat[0].toUpperCase()}${topCat.substring(1)}',
-                ),
-            ],
+        ),
+      ],
+    );
+  }
+}
+
+class _RingPainter extends CustomPainter {
+  final double score;
+  final Color color;
+
+  _RingPainter({required this.score, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = (size.width / 2) - 6;
+    const strokeWidth = 7.0;
+
+    // Track
+    final trackPaint = Paint()
+      ..color = Colors.white.withOpacity(0.10)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth;
+    canvas.drawCircle(center, radius, trackPaint);
+
+    // Arc
+    final arcPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+
+    final sweepAngle = (score / 100) * 2 * 3.141592653589793;
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -3.141592653589793 / 2,
+      sweepAngle,
+      false,
+      arcPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_RingPainter old) =>
+      old.score != score || old.color != color;
+}
+
+class _HealthBadge extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _HealthBadge({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.18),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.5)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.favorite_rounded, color: color, size: 12),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),
