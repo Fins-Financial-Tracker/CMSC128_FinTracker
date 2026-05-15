@@ -8,6 +8,8 @@ import 'package:fins/themes/logic/app_themes.dart';
 
 import '../main.dart';
 import '../utils/notification_helper.dart';
+import 'settings_page.dart'; 
+
 
 bool get _supportsNotifications =>
     !kIsWeb &&
@@ -173,15 +175,41 @@ class _CustomizationPageState extends State<CustomizationPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    'Customizations',
-                    textAlign: TextAlign.left,
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w800,
-                      color: context.onPrimary,
-                      letterSpacing: -0.5,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Customizations',
+                        textAlign: TextAlign.left,
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          color: context.onPrimary,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: context.onPrimary.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.palette_outlined, color: Colors.black),
+                          onPressed: () async {
+                            await Navigator.push( 
+                              context,
+                              MaterialPageRoute(
+                                // fullscreenDialog prevents the hero transition that causes
+                                // a black flash when the theme changes the scaffold color.
+                                fullscreenDialog: true,
+                                builder: (_) => const SettingsPage(),
+                              ),
+                            );
+                            //_loadBudget();
+                          },
+                        ),
+                      )
+                    ]
                   ),
                   const SizedBox(height: 20),
                   Container(
